@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { action, internalMutation, query } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import Groq from "groq-sdk";
+import { Doc } from "./_generated/dataModel";
 
 export const getMessages = query({
   args: {
@@ -63,7 +64,7 @@ export const sendMessageAndGenerateResponse = action({
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     const response = await groq.chat.completions.create({
-      messages: messages.map((message) => ({
+      messages: messages.map((message: Doc<"messages">) => ({
         role: message.role,
         content: message.content,
       })),

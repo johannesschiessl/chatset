@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { ArrowUpIcon } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { useAction } from "convex/react";
+import { Id } from "../../convex/_generated/dataModel";
 
-export default function MessageInput() {
+export default function MessageInput({ chatId }: { chatId: Id<"chats"> }) {
   const sendMessageAndGenerateResponse = useAction(
     api.messages.sendMessageAndGenerateResponse,
   );
@@ -17,7 +18,10 @@ export default function MessageInput() {
     const trimmedMessage = message.trim();
     if (trimmedMessage) {
       setMessage("");
-      sendMessageAndGenerateResponse({ prompt: trimmedMessage });
+      sendMessageAndGenerateResponse({
+        prompt: trimmedMessage,
+        chatId,
+      });
     }
   }
 

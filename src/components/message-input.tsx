@@ -5,17 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowUpIcon } from "lucide-react";
 import { api } from "../../convex/_generated/api";
-import { useMutation } from "convex/react";
+import { useAction } from "convex/react";
 
 export default function MessageInput() {
-  const createMessage = useMutation(api.messages.createMessage);
+  const sendMessageAndGenerateResponse = useAction(
+    api.messages.sendMessageAndGenerateResponse,
+  );
   const [message, setMessage] = useState("");
 
   function handleSend() {
     const trimmedMessage = message.trim();
     if (trimmedMessage) {
       setMessage("");
-      createMessage({ content: trimmedMessage });
+      sendMessageAndGenerateResponse({ prompt: trimmedMessage });
     }
   }
 

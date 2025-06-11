@@ -1,5 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { action, internalMutation, query } from "./_generated/server";
+import { api, internal } from "./_generated/api";
+import Groq from "groq-sdk";
 
 export const getMessages = query({
   handler: async (ctx) => {
@@ -8,7 +10,7 @@ export const getMessages = query({
   },
 });
 
-export const createMessage = mutation({
+export const createUserMessage = internalMutation({
   args: {
     content: v.string(),
   },
@@ -17,10 +19,48 @@ export const createMessage = mutation({
       role: "user",
       content: args.content,
     });
+  },
+});
 
+export const createAssistantMessage = internalMutation({
+  args: {
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
     await ctx.db.insert("messages", {
       role: "assistant",
-      content: "Thanks for your message, this is a test response.",
+      content: args.content,
+    });
+  },
+});
+
+export const sendMessageAndGenerateResponse = action({
+  args: {
+    prompt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.runMutation(internal.messages.createUserMessage, {
+      content: args.prompt,
+    });
+
+    const messages = await ctx.runQuery(api.messages.getMessages);
+
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+    const response = await groq.chat.completions.create({
+      messages: messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
+      model: "llama-3.3-70b-versatile",
+    });
+
+    if (!response.choices[0].message.content) {
+      throw new Error("No response from Groq");
+    }
+
+    await ctx.runMutation(internal.messages.createAssistantMessage, {
+      content: response.choices[0].message.content,
     });
   },
 });

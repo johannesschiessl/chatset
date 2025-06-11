@@ -5,16 +5,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowUpIcon } from "lucide-react";
 import { api } from "../../convex/_generated/api";
-import { useAction } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { Id } from "../../convex/_generated/dataModel";
+import { useRouter } from "next/navigation";
 
-export default function MessageInput({ chatId }: { chatId: Id<"chats"> }) {
+export default function MessageInput({ chatId }: { chatId?: Id<"chats"> }) {
   const sendMessageAndGenerateResponse = useAction(
     api.messages.sendMessageAndGenerateResponse,
   );
+  const startChatWithFirstMessage = useMutation(
+    api.chats.startChatWithFirstMessage,
+  );
+
   const [message, setMessage] = useState("");
 
-  function handleSend() {
+  const router = useRouter();
+
+  async function handleSend() {
+    if (!chatId) {
+      const newChatId = await startChatWithFirstMessage({
+        prompt: message,
+      });
+      router.push(`/chat/${newChatId}`);
+      return;
+    }
+
     const trimmedMessage = message.trim();
     if (trimmedMessage) {
       setMessage("");

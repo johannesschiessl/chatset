@@ -1,11 +1,16 @@
+"use client";
+
 import UserMessage from "@/components/user-message";
 import AssistantMessage from "@/components/assistant-message";
+import { Preloaded, usePreloadedQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 interface MessagesListProps {
-  messages: any[];
+  preloadedMessages: Preloaded<typeof api.messages.getMessages>;
 }
 
-export default function MessagesList({ messages }: MessagesListProps) {
+export default function MessagesList({ preloadedMessages }: MessagesListProps) {
+  const messages = usePreloadedQuery(preloadedMessages);
   return (
     <div className="space-y-2">
       {messages.map((message, index) => (

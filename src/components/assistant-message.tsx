@@ -5,8 +5,14 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
-import { CopyIcon, CheckIcon } from "lucide-react";
+import { CopyIcon, CheckIcon, BrainIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface CodeBlockProps {
   children: string;
@@ -67,9 +73,8 @@ function CodeBlock({ children, className }: CodeBlockProps) {
   );
 }
 
-export default function AssistantMessage({ content }: { content: string }) {
+function MarkdownContent({ content }: { content: string }) {
   return (
-    <div className="mb-4">
       <div className="prose prose-sm dark:prose-invert prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:text-sm prose-li:text-sm prose-blockquote:text-sm prose-code:text-xs max-w-none">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
@@ -173,6 +178,53 @@ export default function AssistantMessage({ content }: { content: string }) {
           {content}
         </ReactMarkdown>
       </div>
+  );
+}
+
+function extractThinkingSections(content: string) {
+  const thinkingRegex = /<think>([\s\S]*?)<\/think>/g;
+  const thinkingSections: string[] = [];
+  let match;
+
+  while ((match = thinkingRegex.exec(content)) !== null) {
+    thinkingSections.push(match[1].trim());
+  }
+
+  const mainContent = content.replace(thinkingRegex, "").trim();
+
+  return { thinkingSections, mainContent };
+}
+
+export default function AssistantMessage({ content }: { content: string }) {
+  const { thinkingSections, mainContent } = extractThinkingSections(content);
+
+  return (
+    <div className="mb-4">
+      {thinkingSections.length > 0 && (
+        <div className="mb-4">
+          <Accordion type="single" collapsible className="w-full rounded-md">
+            <AccordionItem value="thinking">
+              <AccordionTrigger>
+                <div className="flex items-center gap-2">
+                  <BrainIcon className="size-4" />
+                  Thinking...
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="text-muted-foreground space-y-4">
+                  {thinkingSections.map((thinking, index) => (
+                    <div className="border-l-2 pl-2" key={index}>
+                      <MarkdownContent content={thinking} />
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      )}
+
+      <MarkdownContent content={mainContent} />
     </div>
   );
 }

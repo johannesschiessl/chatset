@@ -4,19 +4,18 @@ import { useState, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowUpIcon } from "lucide-react";
+import { api } from "../../convex/_generated/api";
+import { useMutation } from "convex/react";
 
-interface MessageInputProps {
-  onSend: (message: string) => void;
-}
-
-export default function MessageInput({ onSend }: MessageInputProps) {
+export default function MessageInput() {
+  const createMessage = useMutation(api.messages.createMessage);
   const [message, setMessage] = useState("");
 
   function handleSend() {
     const trimmedMessage = message.trim();
     if (trimmedMessage) {
-      onSend(trimmedMessage);
       setMessage("");
+      createMessage({ content: trimmedMessage });
     }
   }
 

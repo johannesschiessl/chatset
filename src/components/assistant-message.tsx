@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
-import { CopyIcon, CheckIcon, BrainIcon } from "lucide-react";
+import { CopyIcon, CheckIcon, BrainIcon, AlertCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -16,6 +16,7 @@ import {
 import { useStream } from "@convex-dev/persistent-text-streaming/react";
 import { api } from "../../convex/_generated/api";
 import type { StreamId } from "@convex-dev/persistent-text-streaming";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface CodeBlockProps {
   children: string;
@@ -228,8 +229,20 @@ export default function AssistantMessage({
   return (
     <div className="mb-4">
       {status === "pending" && <span>Loading...</span>}
-      {status === "error" && <span>Sorry, something went wrong.</span>}
-      {status === "timeout" && <span>Request timed out.</span>}
+      {status === "error" && (
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>Sorry, something went wrong.</AlertTitle>
+          <AlertDescription>Please try again.</AlertDescription>
+        </Alert>
+      )}
+      {status === "timeout" && (
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>Request timed out.</AlertTitle>
+          <AlertDescription>Please try again.</AlertDescription>
+        </Alert>
+      )}
 
       {thinkingSections.length > 0 && (
         <div className="mb-4">

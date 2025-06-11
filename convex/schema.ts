@@ -14,8 +14,9 @@ export default defineSchema({
       }),
       v.object({
         role: v.literal("assistant"),
-        content: v.string(),
+        stream: v.string(),
         chat: v.id("chats"),
+        clientId: v.string(),
       }),
     ),
   ).index("by_chat", ["chat"]),

@@ -13,6 +13,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useStream } from "@convex-dev/persistent-text-streaming/react";
+import { api } from "../../convex/_generated/api";
+import type { StreamId } from "@convex-dev/persistent-text-streaming";
 
 interface CodeBlockProps {
   children: string;
@@ -195,11 +198,39 @@ function extractThinkingSections(content: string) {
   return { thinkingSections, mainContent };
 }
 
-export default function AssistantMessage({ content }: { content: string }) {
-  const { thinkingSections, mainContent } = extractThinkingSections(content);
+if (!process.env.NEXT_PUBLIC_CONVEX_HTTP_URL) {
+  throw new Error("NEXT_PUBLIC_CONVEX_HTTP_URL must be set");
+}
+
+interface AssistantMessageProps {
+  streamId: StreamId;
+  clientId: string;
+}
+
+export default function AssistantMessage({
+  clientId,
+  streamId,
+}: AssistantMessageProps) {
+  var driven = false;
+  if (clientId === window.localStorage.getItem("clientId")) {
+    driven = true;
+  }
+
+  const { text, status } = useStream(
+    api.streaming.getStreamBody,
+    new URL(process.env.NEXT_PUBLIC_CONVEX_HTTP_URL + "/streamMessage"),
+    driven,
+    streamId,
+  );
+
+  const { thinkingSections, mainContent } = extractThinkingSections(text || "");
 
   return (
     <div className="mb-4">
+      {status === "pending" && <span>Loading...</span>}
+      {status === "error" && <span>Sorry, something went wrong.</span>}
+      {status === "timeout" && <span>Request timed out.</span>}
+
       {thinkingSections.length > 0 && (
         <div className="mb-4">
           <Accordion type="single" collapsible className="w-full rounded-md">

@@ -6,18 +6,16 @@ import Groq from "groq-sdk";
 export const startChatWithFirstMessage = mutation({
   args: {
     prompt: v.string(),
+    clientId: v.string(),
   },
   handler: async (ctx, args) => {
     const chatId = await ctx.db.insert("chats", { title: "New Chat" });
 
-    await ctx.scheduler.runAfter(
-      0,
-      api.messages.sendMessageAndGenerateResponse,
-      {
-        prompt: args.prompt,
-        chatId,
-      },
-    );
+    await ctx.scheduler.runAfter(0, api.messages.sendMessage, {
+      prompt: args.prompt,
+      chatId,
+      clientId: args.clientId,
+    });
 
     await ctx.scheduler.runAfter(0, api.chats.generateChatTitle, {
       prompt: args.prompt,

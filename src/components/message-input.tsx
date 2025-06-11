@@ -10,9 +10,7 @@ import { Id } from "../../convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 
 export default function MessageInput({ chatId }: { chatId?: Id<"chats"> }) {
-  const sendMessageAndGenerateResponse = useAction(
-    api.messages.sendMessageAndGenerateResponse,
-  );
+  const sendMessage = useMutation(api.messages.sendMessage);
   const startChatWithFirstMessage = useMutation(
     api.chats.startChatWithFirstMessage,
   );
@@ -25,6 +23,7 @@ export default function MessageInput({ chatId }: { chatId?: Id<"chats"> }) {
     if (!chatId) {
       const newChatId = await startChatWithFirstMessage({
         prompt: message,
+        clientId: window.localStorage.getItem("clientId") || "",
       });
       router.push(`/chat/${newChatId}`);
       return;
@@ -33,9 +32,10 @@ export default function MessageInput({ chatId }: { chatId?: Id<"chats"> }) {
     const trimmedMessage = message.trim();
     if (trimmedMessage) {
       setMessage("");
-      sendMessageAndGenerateResponse({
+      sendMessage({
         prompt: trimmedMessage,
         chatId,
+        clientId: window.localStorage.getItem("clientId") || "",
       });
     }
   }

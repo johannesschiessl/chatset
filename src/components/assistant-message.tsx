@@ -228,7 +228,15 @@ export default function AssistantMessage({
 
   return (
     <div className="mb-4">
-      {status === "pending" && <span>Loading...</span>}
+      {status === "pending" && (
+        <div className="text-muted-foreground">
+          <div className="flex gap-1">
+            <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]"></div>
+            <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]"></div>
+            <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-current"></div>
+          </div>
+        </div>
+      )}
       {status === "error" && (
         <Alert variant="destructive">
           <AlertCircleIcon />

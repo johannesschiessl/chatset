@@ -33,6 +33,7 @@ export default function MessagesList({ preloadedMessages }: MessagesListProps) {
             <UserMessage content={message.content} />
           ) : (
             <AssistantMessage
+              model={message.model}
               streamId={message.stream as StreamId}
               clientId={message.clientId}
             />

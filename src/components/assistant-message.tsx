@@ -17,6 +17,7 @@ import { useStream } from "@convex-dev/persistent-text-streaming/react";
 import { api } from "../../convex/_generated/api";
 import type { StreamId } from "@convex-dev/persistent-text-streaming";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { models } from "../../models";
 
 interface CodeBlockProps {
   children: string;
@@ -206,11 +207,13 @@ if (!process.env.NEXT_PUBLIC_CONVEX_HTTP_URL) {
 interface AssistantMessageProps {
   streamId: StreamId;
   clientId: string;
+  model: string;
 }
 
 export default function AssistantMessage({
   clientId,
   streamId,
+  model,
 }: AssistantMessageProps) {
   var driven = false;
   if (clientId === window.localStorage.getItem("clientId")) {
@@ -277,6 +280,11 @@ export default function AssistantMessage({
       )}
 
       <MarkdownContent content={mainContent} />
+      {status === "done" && (
+        <span className="text-muted-foreground text-xs">
+          Generated with {models[model as keyof typeof models].label}
+        </span>
+      )}
     </div>
   );
 }

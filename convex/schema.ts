@@ -16,6 +16,7 @@ export default defineSchema({
         role: v.literal("assistant"),
         stream: v.string(),
         chat: v.id("chats"),
+        model: v.string(),
         clientId: v.string(),
       }),
     ),

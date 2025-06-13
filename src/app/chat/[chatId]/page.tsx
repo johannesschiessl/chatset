@@ -5,17 +5,26 @@ import { preloadQuery } from "convex/nextjs";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 type Params = Promise<{ chatId: Id<"chats"> }>;
+type SearchParams = Promise<{ model: string }>;
 
-export default async function ChatPage({ params }: { params: Params }) {
+export default async function ChatPage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   const { chatId } = await params;
+  const { model } = await searchParams;
+
   const preloadedMessages = await preloadQuery(api.messages.getMessages, {
     chatId: chatId,
   });
 
   return (
-    <div className="mx-auto max-w-2xl pt-4 pb-20">
+    <div className="mx-auto max-w-2xl pt-4 pb-60">
       <MessagesList preloadedMessages={preloadedMessages} />
-      <MessageInput chatId={chatId} />
+      <MessageInput chatId={chatId} model={model} />
     </div>
   );
 }

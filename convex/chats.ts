@@ -1,7 +1,61 @@
 import { api, internal } from "./_generated/api";
-import { internalAction, mutation } from "./_generated/server";
+import { internalAction, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import Groq from "groq-sdk";
+
+export const getChatsGroupedByDate = query({
+  returns: v.array(
+    v.object({
+      date: v.string(),
+      chats: v.array(
+        v.object({
+          _id: v.id("chats"),
+          _creationTime: v.number(),
+          title: v.string(),
+        }),
+      ),
+    }),
+  ),
+  handler: async (ctx) => {
+    const chats = await ctx.db.query("chats").order("desc").take(100);
+
+    const groupedChats = new Map<string, typeof chats>();
+
+    for (const chat of chats) {
+      const date = new Date(chat._creationTime);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      let dateKey: string;
+
+      if (date.toDateString() === today.toDateString()) {
+        dateKey = "Today";
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        dateKey = "Yesterday";
+      } else {
+        dateKey = date.toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      }
+
+      if (!groupedChats.has(dateKey)) {
+        groupedChats.set(dateKey, []);
+      }
+      groupedChats.get(dateKey)!.push(chat);
+    }
+
+    const result = Array.from(groupedChats.entries()).map(([date, chats]) => ({
+      date,
+      chats,
+    }));
+
+    return result;
+  },
+});
 
 export const startChatWithFirstMessage = mutation({
   args: {

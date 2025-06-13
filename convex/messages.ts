@@ -7,9 +7,10 @@ import {
   query,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
-import Groq from "groq-sdk";
 import { StreamId } from "@convex-dev/persistent-text-streaming";
 import { streamingComponent } from "./streaming";
+import { streamText } from "ai";
+import { models } from "../models";
 
 export const getMessages = query({
   args: {
@@ -44,6 +45,7 @@ export const createAssistantMessage = internalMutation({
     streamId: v.string(),
     chatId: v.id("chats"),
     clientId: v.string(),
+    model: v.string(),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("messages", {
@@ -51,6 +53,7 @@ export const createAssistantMessage = internalMutation({
       stream: args.streamId,
       chat: args.chatId,
       clientId: args.clientId,
+      model: args.model,
     });
   },
 });
@@ -60,29 +63,22 @@ export const sendMessage = mutation({
     prompt: v.string(),
     chatId: v.id("chats"),
     clientId: v.string(),
+    model: v.string(),
   },
   handler: async (ctx, args) => {
-    console.log("[SEND MESSAGE] PROMPT: ", args.prompt);
-    console.log("[SEND MESSAGE] CHAT ID: ", args.chatId);
-
     await ctx.runMutation(internal.messages.createUserMessage, {
       content: args.prompt,
       chatId: args.chatId,
     });
 
-    console.log("[SEND MESSAGE] CREATED USER MESSAGE");
-
     const streamId = await streamingComponent.createStream(ctx);
-
-    console.log("[SEND MESSAGE] CREATED STREAM ID: ", streamId);
 
     await ctx.runMutation(internal.messages.createAssistantMessage, {
       streamId,
       chatId: args.chatId,
       clientId: args.clientId,
+      model: args.model,
     });
-
-    console.log("[SEND MESSAGE] CREATED ASSISTANT MESSAGE");
   },
 });
 
@@ -149,8 +145,6 @@ export const streamAssistantMessage = httpAction(async (ctx, request) => {
     request,
     body.streamId as StreamId,
     async (ctx, request, streamId, append) => {
-      console.log("[STREAM ASSISTANT MESSAGE] STREAM ID: ", streamId);
-
       const message = await ctx.runQuery(
         internal.messages.getMessageByStreamId,
         {
@@ -162,24 +156,24 @@ export const streamAssistantMessage = httpAction(async (ctx, request) => {
         throw new Error("Message not found for streamId: " + streamId);
       }
 
-      console.log("[STREAM ASSISTANT MESSAGE] MESSAGE: ", message);
+      // Should never happen, here for type safety
+      if (message.role === "user") {
+        throw new Error("User message found for streamId: " + streamId);
+      }
 
-      const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+      if (!models[message.model as keyof typeof models]) {
+        throw new Error("Model not found: " + message.model);
+      }
 
-      const stream = await groq.chat.completions.create({
+      const { textStream } = streamText({
+        model: models[message.model as keyof typeof models].model,
         messages: await ctx.runQuery(internal.messages.getHistory, {
           chatId: message.chat,
         }),
-        model: "qwen/qwen3-32b",
-        max_completion_tokens: 8000,
-        stream: true,
       });
 
-      console.log("[STREAM ASSISTANT MESSAGE] Call to Groq");
-
-      for await (const chunk of stream) {
-        console.log("[STREAM ASSISTANT MESSAGE] CHUNK: ", chunk);
-        await append(chunk.choices[0].delta.content || "");
+      for await (const textPart of textStream) {
+        await append(textPart);
       }
     },
   );

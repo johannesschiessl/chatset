@@ -21,10 +21,15 @@ export default async function ChatPage({
     chatId: chatId,
   });
 
+  // TODO: figure out how to make the scroll bar better, so we don't need pr-2
   return (
-    <div className="mx-auto max-w-2xl pt-4 pb-60">
-      <MessagesList preloadedMessages={preloadedMessages} />
-      <MessageInput chatId={chatId} model={model} />
+    <div className="flex h-full flex-col">
+      <div className="flex-1 overflow-y-auto pr-2 pb-4">
+        <MessagesList preloadedMessages={preloadedMessages} />
+      </div>
+      <div className="mb-5 flex-shrink-0">
+        <MessageInput chatId={chatId} model={model} />
+      </div>
     </div>
   );
 }

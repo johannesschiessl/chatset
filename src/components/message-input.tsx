@@ -81,43 +81,41 @@ export default function MessageInput({ chatId, model }: MessageInputProps) {
   }
 
   return (
-    <div className="bg-background fixed right-0 bottom-0 left-0 z-50 pb-5">
-      <div className="bg-muted mx-auto max-w-2xl rounded-md p-4">
-        {/* Message input */}
-        <div className="mb-3">
-          <Textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setMessage(e.target.value)
+    <div className="bg-muted mx-auto w-2xl max-w-2xl rounded-md p-4">
+      {/* Message input */}
+      <div className="mb-3">
+        <Textarea
+          ref={textareaRef}
+          value={message}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            setMessage(e.target.value)
+          }
+          onKeyDown={handleKeyDown}
+          placeholder="Type a message..."
+          className="min-h-[48px] resize-none border-none bg-transparent p-1 shadow-none focus-visible:ring-0 dark:bg-transparent"
+          rows={2}
+          aria-label="Message input"
+        />
+      </div>
+
+      {/* Action row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ModelSelection
+            onSelect={(modelString, modelLabel) =>
+              setSelectedModel({ string: modelString, label: modelLabel })
             }
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            className="min-h-[48px] resize-none border-none bg-transparent p-1 shadow-none focus-visible:ring-0 dark:bg-transparent"
-            rows={2}
-            aria-label="Message input"
-          />
+          >
+            <Button variant="outline" className="gap-2">
+              {selectedModel.label}
+              <ChevronDownIcon className="h-4 w-4" />
+            </Button>
+          </ModelSelection>
         </div>
 
-        {/* Action row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ModelSelection
-              onSelect={(modelString, modelLabel) =>
-                setSelectedModel({ string: modelString, label: modelLabel })
-              }
-            >
-              <Button variant="outline" className="gap-2">
-                {selectedModel.label}
-                <ChevronDownIcon className="h-4 w-4" />
-              </Button>
-            </ModelSelection>
-          </div>
-
-          <Button disabled={!message.trim()} onClick={handleSend} size="icon">
-            <ArrowUpIcon className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button disabled={!message.trim()} onClick={handleSend} size="icon">
+          <ArrowUpIcon className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

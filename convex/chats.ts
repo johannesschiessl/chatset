@@ -17,7 +17,7 @@ export const startChatWithFirstMessage = mutation({
       clientId: args.clientId,
     });
 
-    await ctx.scheduler.runAfter(0, api.chats.generateChatTitle, {
+    await ctx.scheduler.runAfter(0, internal.chats.generateChatTitle, {
       prompt: args.prompt,
       chatId,
     });
@@ -36,7 +36,7 @@ export const updateChatTitle = mutation({
   },
 });
 
-export const generateChatTitle = action({
+export const generateChatTitle = internalAction({
   args: {
     prompt: v.string(),
     chatId: v.id("chats"),

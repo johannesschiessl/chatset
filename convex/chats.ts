@@ -62,6 +62,7 @@ export const startChatWithFirstMessage = mutation({
     prompt: v.string(),
     clientId: v.string(),
     model: v.string(),
+    forceTool: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const chatId = await ctx.db.insert("chats", { title: "New Chat" });
@@ -71,6 +72,7 @@ export const startChatWithFirstMessage = mutation({
       chatId,
       clientId: args.clientId,
       model: args.model,
+      forceTool: args.forceTool,
     });
 
     await ctx.scheduler.runAfter(0, internal.chats.generateChatTitle, {

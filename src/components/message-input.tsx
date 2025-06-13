@@ -3,20 +3,26 @@
 import { useState, KeyboardEvent, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowUpIcon, ChevronDownIcon } from "lucide-react";
+import { ArrowUpIcon, ChevronDownIcon, WrenchIcon } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { Id } from "../../convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import ModelSelection from "./model-selection";
-import { models } from "../../models";
+import ToolSelection from "./tool-selection";
+import { models, toolConfigs } from "../../models";
 
 interface MessageInputProps {
   chatId?: Id<"chats">;
   model?: string;
+  forceTool?: string;
 }
 
-export default function MessageInput({ chatId, model }: MessageInputProps) {
+export default function MessageInput({
+  chatId,
+  model,
+  forceTool,
+}: MessageInputProps) {
   const sendMessage = useMutation(api.messages.sendMessage);
   const startChatWithFirstMessage = useMutation(
     api.chats.startChatWithFirstMessage,
@@ -28,9 +34,30 @@ export default function MessageInput({ chatId, model }: MessageInputProps) {
     label:
       models[model as keyof typeof models]?.label || models["gpt-4.1"].label,
   });
+  const [selectedTool, setSelectedTool] = useState<{
+    string?: string;
+    label: string;
+  }>({
+    string: forceTool,
+    label: forceTool
+      ? toolConfigs[forceTool as keyof typeof toolConfigs]?.label || ""
+      : "",
+  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const router = useRouter();
+
+  useEffect(() => {
+    const modelConfig = models[selectedModel.string as keyof typeof models];
+    const availableTools = modelConfig?.tools || [];
+
+    if (
+      selectedTool.string &&
+      !availableTools.includes(selectedTool.string as any)
+    ) {
+      setSelectedTool({ string: undefined, label: "" });
+    }
+  }, [selectedModel.string, selectedTool.string]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -56,8 +83,13 @@ export default function MessageInput({ chatId, model }: MessageInputProps) {
         prompt: message,
         clientId: window.localStorage.getItem("clientId") || "",
         model: selectedModel.string,
+        forceTool: selectedTool.string,
       });
-      router.push(`/chat/${newChatId}?model=${selectedModel.string}`);
+      router.push(
+        `/chat/${newChatId}?model=${selectedModel.string}${
+          selectedTool.string ? `&tool=${selectedTool.string}` : ""
+        }`,
+      );
       return;
     }
 
@@ -69,6 +101,7 @@ export default function MessageInput({ chatId, model }: MessageInputProps) {
         chatId,
         model: selectedModel.string,
         clientId: window.localStorage.getItem("clientId") || "",
+        forceTool: selectedTool.string,
       });
     }
   }
@@ -79,6 +112,14 @@ export default function MessageInput({ chatId, model }: MessageInputProps) {
       handleSend();
     }
   }
+
+  const modelConfig = models[selectedModel.string as keyof typeof models];
+  const hasTools = modelConfig?.tools && modelConfig.tools.length > 0;
+
+  const selectedToolIcon = selectedTool.string
+    ? toolConfigs[selectedTool.string as keyof typeof toolConfigs]?.icon
+    : null;
+  const ToolIcon = selectedToolIcon || WrenchIcon;
 
   return (
     <div className="bg-muted mx-auto w-2xl max-w-2xl rounded-md p-4">
@@ -111,6 +152,22 @@ export default function MessageInput({ chatId, model }: MessageInputProps) {
               <ChevronDownIcon className="h-4 w-4" />
             </Button>
           </ModelSelection>
+
+          {hasTools && (
+            <ToolSelection
+              selectedModel={selectedModel.string}
+              selectedTool={selectedTool.string}
+              onSelect={(toolString, toolLabel) =>
+                setSelectedTool({ string: toolString, label: toolLabel })
+              }
+            >
+              <Button variant="outline" className="gap-2">
+                <ToolIcon className="h-4 w-4" />
+                {selectedTool.label}
+                <ChevronDownIcon className="h-4 w-4" />
+              </Button>
+            </ToolSelection>
+          )}
         </div>
 
         <Button disabled={!message.trim()} onClick={handleSend} size="icon">

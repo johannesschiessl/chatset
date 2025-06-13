@@ -5,7 +5,7 @@ import { preloadQuery } from "convex/nextjs";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 type Params = Promise<{ chatId: Id<"chats"> }>;
-type SearchParams = Promise<{ model: string }>;
+type SearchParams = Promise<{ model: string; tool?: string }>;
 
 export default async function ChatPage({
   params,
@@ -15,7 +15,7 @@ export default async function ChatPage({
   searchParams: SearchParams;
 }) {
   const { chatId } = await params;
-  const { model } = await searchParams;
+  const { model, tool } = await searchParams;
 
   const preloadedMessages = await preloadQuery(api.messages.getMessages, {
     chatId: chatId,
@@ -28,7 +28,7 @@ export default async function ChatPage({
         <MessagesList preloadedMessages={preloadedMessages} />
       </div>
       <div className="mb-5 flex-shrink-0">
-        <MessageInput chatId={chatId} model={model} />
+        <MessageInput chatId={chatId} model={model} forceTool={tool} />
       </div>
     </div>
   );

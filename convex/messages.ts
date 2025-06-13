@@ -10,7 +10,8 @@ import { internal } from "./_generated/api";
 import { StreamId } from "@convex-dev/persistent-text-streaming";
 import { streamingComponent } from "./streaming";
 import { streamText } from "ai";
-import { models } from "../models";
+import { modelProviders, models } from "../models";
+import { getTools } from "./helpers";
 
 export const getMessages = query({
   args: {
@@ -46,6 +47,7 @@ export const createAssistantMessage = internalMutation({
     chatId: v.id("chats"),
     clientId: v.string(),
     model: v.string(),
+    forceTool: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("messages", {
@@ -54,6 +56,7 @@ export const createAssistantMessage = internalMutation({
       chat: args.chatId,
       clientId: args.clientId,
       model: args.model,
+      forceTool: args.forceTool,
     });
   },
 });
@@ -64,6 +67,7 @@ export const sendMessage = mutation({
     chatId: v.id("chats"),
     clientId: v.string(),
     model: v.string(),
+    forceTool: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.runMutation(internal.messages.createUserMessage, {
@@ -78,6 +82,7 @@ export const sendMessage = mutation({
       chatId: args.chatId,
       clientId: args.clientId,
       model: args.model,
+      forceTool: args.forceTool,
     });
   },
 });
@@ -170,6 +175,7 @@ export const streamAssistantMessage = httpAction(async (ctx, request) => {
         messages: await ctx.runQuery(internal.messages.getHistory, {
           chatId: message.chat,
         }),
+        ...getTools(message.model, message.forceTool),
       });
 
       for await (const textPart of textStream) {

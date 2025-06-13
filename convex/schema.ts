@@ -18,6 +18,7 @@ export default defineSchema({
         chat: v.id("chats"),
         model: v.string(),
         clientId: v.string(),
+        forceTool: v.optional(v.string()),
       }),
     ),
   ).index("by_chat", ["chat"]),

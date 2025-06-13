@@ -36,6 +36,7 @@ export default function MessagesList({ preloadedMessages }: MessagesListProps) {
               model={message.model}
               streamId={message.stream as StreamId}
               clientId={message.clientId}
+              content={message.content}
             />
           )}
         </div>

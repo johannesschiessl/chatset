@@ -14,6 +14,7 @@ export default defineSchema({
       }),
       v.object({
         role: v.literal("assistant"),
+        content: v.optional(v.string()),
         stream: v.string(),
         chat: v.id("chats"),
         model: v.string(),

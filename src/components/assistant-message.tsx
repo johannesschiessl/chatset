@@ -208,26 +208,39 @@ interface AssistantMessageProps {
   streamId: StreamId;
   clientId: string;
   model: string;
+  content?: string;
 }
 
 export default function AssistantMessage({
   clientId,
   streamId,
   model,
+  content,
 }: AssistantMessageProps) {
-  var driven = false;
-  if (clientId === window.localStorage.getItem("clientId")) {
-    driven = true;
+  function useConditionalStream() {
+    if (content) {
+      return { text: "", status: "done" as const };
+    }
+
+    var driven = false;
+    if (clientId === window.localStorage.getItem("clientId")) {
+      driven = true;
+    }
+
+    return useStream(
+      api.streaming.getStreamBody,
+      new URL(process.env.NEXT_PUBLIC_CONVEX_HTTP_URL + "/streamMessage"),
+      driven,
+      streamId,
+    );
   }
 
-  const { text, status } = useStream(
-    api.streaming.getStreamBody,
-    new URL(process.env.NEXT_PUBLIC_CONVEX_HTTP_URL + "/streamMessage"),
-    driven,
-    streamId,
-  );
+  const streamResult = useConditionalStream();
 
-  const { thinkingSections, mainContent } = extractThinkingSections(text || "");
+  const text = content || streamResult.text || "";
+  const status = content ? "done" : streamResult.status;
+
+  const { thinkingSections, mainContent } = extractThinkingSections(text);
 
   return (
     <div className="mb-4">

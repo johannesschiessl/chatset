@@ -6,11 +6,11 @@ import {
   mutation,
   query,
 } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { StreamId } from "@convex-dev/persistent-text-streaming";
 import { streamingComponent } from "./streaming";
 import { streamText } from "ai";
-import { modelProviders, models } from "../models";
+import { models } from "../models";
 import { getTools } from "./helpers";
 
 export const getMessages = query({
@@ -57,6 +57,18 @@ export const createAssistantMessage = internalMutation({
       clientId: args.clientId,
       model: args.model,
       forceTool: args.forceTool,
+    });
+  },
+});
+
+export const addContentToAssistantMessage = internalMutation({
+  args: {
+    content: v.string(),
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, {
+      content: args.content,
     });
   },
 });
@@ -183,6 +195,23 @@ export const streamAssistantMessage = httpAction(async (ctx, request) => {
       }
     },
   );
+
+  const message = await ctx.runQuery(internal.messages.getMessageByStreamId, {
+    streamId: body.streamId,
+  });
+
+  if (!message) {
+    throw new Error("Message not found for streamId: " + body.streamId);
+  }
+
+  const finalResponse = await ctx.runQuery(api.streaming.getStreamBody, {
+    streamId: body.streamId,
+  });
+
+  await ctx.runMutation(internal.messages.addContentToAssistantMessage, {
+    messageId: message._id,
+    content: finalResponse.text,
+  });
 
   response.headers.set("Access-Control-Allow-Origin", "*");
   response.headers.set("Vary", "Origin");

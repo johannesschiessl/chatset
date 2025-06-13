@@ -1,5 +1,5 @@
-import { api } from "./_generated/api";
-import { action, mutation } from "./_generated/server";
+import { api, internal } from "./_generated/api";
+import { internalAction, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import Groq from "groq-sdk";
 
@@ -7,6 +7,7 @@ export const startChatWithFirstMessage = mutation({
   args: {
     prompt: v.string(),
     clientId: v.string(),
+    model: v.string(),
   },
   handler: async (ctx, args) => {
     const chatId = await ctx.db.insert("chats", { title: "New Chat" });
@@ -15,6 +16,7 @@ export const startChatWithFirstMessage = mutation({
       prompt: args.prompt,
       chatId,
       clientId: args.clientId,
+      model: args.model,
     });
 
     await ctx.scheduler.runAfter(0, internal.chats.generateChatTitle, {

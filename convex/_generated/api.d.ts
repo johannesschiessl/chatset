@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as betterAuth from "../betterAuth.js";
 import type * as chats from "../chats.js";
 import type * as helpers from "../helpers.js";
 import type * as http from "../http.js";
@@ -29,6 +30,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  betterAuth: typeof betterAuth;
   chats: typeof chats;
   helpers: typeof helpers;
   http: typeof http;

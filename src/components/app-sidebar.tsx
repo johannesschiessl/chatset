@@ -67,7 +67,7 @@ export function AppSidebar() {
           </div>
           <SidebarTrigger />
         </div>
-        <Link href="/chat">
+        <Link href="/">
           <Button className="w-full">New chat</Button>
         </Link>
       </SidebarHeader>

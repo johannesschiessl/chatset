@@ -1,8 +1,8 @@
 import MessageInput from "@/components/message-input";
 import MessagesList from "@/components/messages-list";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 import { preloadQuery } from "convex/nextjs";
-import { Id } from "../../../../convex/_generated/dataModel";
+import { Id } from "../../../../../convex/_generated/dataModel";
 
 type Params = Promise<{ chatId: Id<"chats"> }>;
 type SearchParams = Promise<{ model: string; tool?: string }>;

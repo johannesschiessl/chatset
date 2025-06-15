@@ -32,7 +32,7 @@ export default function AuthPage() {
                   await authClient.signIn.social(
                     {
                       provider: "google",
-                      callbackURL: "/chat",
+                      callbackURL: "/",
                     },
                     {
                       onRequest: (ctx) => {

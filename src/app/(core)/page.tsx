@@ -1,6 +1,6 @@
 import MessageInput from "@/components/message-input";
 
-export default function ChatPage() {
+export default function HomePage() {
   return (
     // TODO: Remove mt-80
     <div className="mt-80 flex flex-col items-center justify-center px-4">

@@ -60,4 +60,11 @@ export const models = {
     byok: false,
     tools: [] as ToolName[],
   },
+  "llama-3.1-8b": {
+    label: "Llama 3.1 8B",
+    model: groq("llama-3.1-8b-instant"),
+    provider: modelProviders.groq,
+    byok: false,
+    tools: [] as ToolName[],
+  },
 };

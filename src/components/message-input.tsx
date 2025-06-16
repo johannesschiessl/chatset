@@ -30,9 +30,10 @@ export default function MessageInput({
 
   const [message, setMessage] = useState("");
   const [selectedModel, setSelectedModel] = useState({
-    string: model || "gpt-4.1",
+    string: model || "llama-3.1-8b",
     label:
-      models[model as keyof typeof models]?.label || models["gpt-4.1"].label,
+      models[model as keyof typeof models]?.label ||
+      models["llama-3.1-8b"].label,
   });
   const [selectedTool, setSelectedTool] = useState<{
     string?: string;

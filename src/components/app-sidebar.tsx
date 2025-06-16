@@ -1,10 +1,11 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { Preloaded, usePreloadedQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -12,50 +13,27 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSkeleton,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-export function AppSidebar() {
-  const chatsGroupedByDate = useQuery(api.chats.getChatsGroupedByDate);
+export function AppSidebar({
+  preloadedChats,
+}: {
+  preloadedChats: Preloaded<typeof api.chats.getChatsGroupedByDate>;
+}) {
+  const session = authClient.useSession();
+
+  const chatsGroupedByDate = usePreloadedQuery(preloadedChats);
   const pathname = usePathname();
 
-  if (chatsGroupedByDate === undefined) {
-    return (
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 p-2">
-              <h1 className="text-lg font-bold">jxs Chat</h1>
-              <Badge variant="outline">Beta</Badge>
-            </div>
-            <SidebarTrigger />
-          </div>
-          <Link href="/">
-            <Button className="w-full">New chat</Button>
-          </Link>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <SidebarMenuItem key={index}>
-                    <SidebarMenuSkeleton />
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
-    );
-  }
+  const router = useRouter();
 
   return (
     <Sidebar>
@@ -82,7 +60,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       className={cn(
                         pathname === `/chat/${chat._id}` &&
-                          "bg-sidebar-accent text-sidebar-accent-foreground",
+                          "text-sidebar-accent-foreground bg-sidebar-accent",
                       )}
                       asChild
                     >
@@ -97,6 +75,21 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => router.push("/settings")}>
+              <Avatar className="size-6">
+                <AvatarImage src={session.data?.user?.image ?? ""} />
+                <AvatarFallback>
+                  {session.data?.user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+                </AvatarFallback>
+              </Avatar>
+              {session.data?.user?.name ?? "Loading..."}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

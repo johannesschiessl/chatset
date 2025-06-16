@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { models, toolConfigs } from "../../models";
 import { Badge } from "@/components/ui/badge";
-import { SparklesIcon } from "lucide-react";
 
 interface ToolSelectionProps {
   children: ReactNode;

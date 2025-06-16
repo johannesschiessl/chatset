@@ -84,7 +84,7 @@ function MarkdownContent({ content }: { content: string }) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          code(props: any) {
+          code(props: { children?: React.ReactNode; className?: string }) {
             const { children, className, ...rest } = props;
             const childrenString = String(children).replace(/\n$/, "");
             const isInline = !className;
@@ -217,25 +217,18 @@ export default function AssistantMessage({
   model,
   content,
 }: AssistantMessageProps) {
-  function useConditionalStream() {
-    if (content) {
-      return { text: "", status: "done" as const };
-    }
-
-    var driven = false;
-    if (clientId === window.localStorage.getItem("clientId")) {
-      driven = true;
-    }
-
-    return useStream(
-      api.streaming.getStreamBody,
-      new URL(process.env.NEXT_PUBLIC_CONVEX_HTTP_URL + "/streamMessage"),
-      driven,
-      streamId,
-    );
+  let driven = false;
+  if (clientId === window.localStorage.getItem("clientId")) {
+    driven = true;
   }
 
-  const streamResult = useConditionalStream();
+  // TODO: figure out how to only call this if absolutely necessary
+  const streamResult = useStream(
+    api.streaming.getStreamBody,
+    new URL(process.env.NEXT_PUBLIC_CONVEX_HTTP_URL + "/streamMessage"),
+    driven,
+    streamId,
+  );
 
   const text = content || streamResult.text || "";
   const status = content ? "done" : streamResult.status;

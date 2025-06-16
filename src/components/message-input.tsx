@@ -53,7 +53,7 @@ export default function MessageInput({
 
     if (
       selectedTool.string &&
-      !availableTools.includes(selectedTool.string as any)
+      !availableTools.includes(selectedTool.string as keyof typeof toolConfigs)
     ) {
       setSelectedTool({ string: undefined, label: "" });
     }

@@ -35,10 +35,10 @@ export default function AuthPage() {
                       callbackURL: "/",
                     },
                     {
-                      onRequest: (ctx) => {
+                      onRequest: () => {
                         setisLoading(true);
                       },
-                      onResponse: (ctx) => {
+                      onResponse: () => {
                         setisLoading(false);
                       },
                     },

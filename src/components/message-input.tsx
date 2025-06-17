@@ -7,22 +7,19 @@ import { ArrowUpIcon, ChevronDownIcon, WrenchIcon } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { Id } from "../../convex/_generated/dataModel";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ModelSelection from "./model-selection";
 import ToolSelection from "./tool-selection";
 import { models, toolConfigs } from "../../models";
+import { authClient } from "@/lib/auth-client";
 
-interface MessageInputProps {
-  chatId?: Id<"chats">;
-  model?: string;
-  forceTool?: string;
-}
+export default function MessageInput() {
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const chatId = params.chatId as Id<"chats">;
+  const model = searchParams.get("model") || "llama-3.1-8b";
+  const forceTool = searchParams.get("tool") || undefined;
 
-export default function MessageInput({
-  chatId,
-  model,
-  forceTool,
-}: MessageInputProps) {
   const sendMessage = useMutation(api.messages.sendMessage);
   const startChatWithFirstMessage = useMutation(
     api.chats.startChatWithFirstMessage,
@@ -30,19 +27,15 @@ export default function MessageInput({
 
   const [message, setMessage] = useState("");
   const [selectedModel, setSelectedModel] = useState({
-    string: model || "llama-3.1-8b",
-    label:
-      models[model as keyof typeof models]?.label ||
-      models["llama-3.1-8b"].label,
+    string: model,
+    label: models[model as keyof typeof models]?.label,
   });
   const [selectedTool, setSelectedTool] = useState<{
     string?: string;
-    label: string;
+    label?: string;
   }>({
     string: forceTool,
-    label: forceTool
-      ? toolConfigs[forceTool as keyof typeof toolConfigs]?.label || ""
-      : "",
+    label: toolConfigs[forceTool as keyof typeof toolConfigs]?.label,
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -79,12 +72,15 @@ export default function MessageInput({
   }, [message]);
 
   async function handleSend() {
+    const session = await authClient.getSession();
+
     if (!chatId) {
       const newChatId = await startChatWithFirstMessage({
         prompt: message,
         clientId: window.localStorage.getItem("clientId") || "",
         model: selectedModel.string,
         forceTool: selectedTool.string,
+        sessionToken: session.data?.session.token ?? "",
       });
       router.push(
         `/chat/${newChatId}?model=${selectedModel.string}${
@@ -103,6 +99,7 @@ export default function MessageInput({
         model: selectedModel.string,
         clientId: window.localStorage.getItem("clientId") || "",
         forceTool: selectedTool.string,
+        sessionToken: session.data?.session.token || "",
       });
     }
   }

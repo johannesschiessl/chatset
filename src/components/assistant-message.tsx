@@ -3,7 +3,10 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import {
+  oneLight,
+  oneDark,
+} from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
 import { CopyIcon, CheckIcon, BrainIcon, AlertCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +21,7 @@ import { api } from "../../convex/_generated/api";
 import type { StreamId } from "@convex-dev/persistent-text-streaming";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { models } from "../../models";
+import { useTheme } from "next-themes";
 
 interface CodeBlockProps {
   children: string;
@@ -28,6 +32,7 @@ function CodeBlock({ children, className }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
   const match = /language-(\w+)/.exec(className || "");
   const language = match ? match[1] : "";
+  const { theme } = useTheme();
 
   async function handleCopy() {
     await navigator.clipboard.writeText(children);
@@ -55,7 +60,7 @@ function CodeBlock({ children, className }: CodeBlockProps) {
           </Button>
         </div>
         <SyntaxHighlighter
-          style={oneLight}
+          style={theme === "dark" ? oneDark : oneLight}
           language={language}
           PreTag="div"
           className="!rounded-b-md"

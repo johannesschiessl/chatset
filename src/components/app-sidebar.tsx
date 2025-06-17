@@ -1,6 +1,6 @@
 "use client";
 
-import { Preloaded, usePreloadedQuery } from "convex/react";
+import { Preloaded, usePreloadedQuery, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   Sidebar,
@@ -22,6 +22,44 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Id } from "../../convex/_generated/dataModel";
+
+function ChatItem({
+  chat,
+  isActive,
+  sessionToken,
+}: {
+  chat: { _id: Id<"chats">; title: string };
+  isActive: boolean;
+  sessionToken: string | undefined;
+}) {
+  // This will prefetch messages for this specific chat for caching
+  // Only call useQuery when we have a valid session token to avoid unnecessary calls
+  useQuery(
+    api.messages.getMessages,
+    sessionToken
+      ? {
+          chatId: chat._id,
+          sessionToken: sessionToken,
+        }
+      : "skip",
+  );
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        className={cn(
+          isActive && "text-sidebar-accent-foreground bg-sidebar-accent",
+        )}
+        asChild
+      >
+        <Link href={`/chat/${chat._id}`}>
+          <span className="truncate">{chat.title}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 export function AppSidebar({
   preloadedChats,
@@ -56,19 +94,12 @@ export function AppSidebar({
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.chats.map((chat) => (
-                  <SidebarMenuItem key={chat._id}>
-                    <SidebarMenuButton
-                      className={cn(
-                        pathname === `/chat/${chat._id}` &&
-                          "text-sidebar-accent-foreground bg-sidebar-accent",
-                      )}
-                      asChild
-                    >
-                      <Link href={`/chat/${chat._id}`}>
-                        <span className="truncate">{chat.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <ChatItem
+                    key={chat._id}
+                    chat={chat}
+                    isActive={pathname === `/chat/${chat._id}`}
+                    sessionToken={session.data?.session.token}
+                  />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>

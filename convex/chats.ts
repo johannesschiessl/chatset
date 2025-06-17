@@ -1,6 +1,10 @@
 import { api, internal } from "./_generated/api";
-import { internalAction, mutation,
-query } from "./_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  mutation,
+  query,
+} from "./_generated/server";
 import { v } from "convex/values";
 import Groq from "groq-sdk";
 import { verifyAuth } from "./helpers";
@@ -105,7 +109,7 @@ export const startChatWithFirstMessage = mutation({
   },
 });
 
-export const updateChatTitle = mutation({
+export const updateChatTitle = internalMutation({
   args: {
     chatId: v.id("chats"),
     title: v.string(),
@@ -128,11 +132,11 @@ export const generateChatTitle = internalAction({
         {
           role: "system",
           content:
-            "Generate a title for this chat based on the user message. It must be short with only a few words. Never output anything other than the title, and never mention that you are an AI model. The title must be in the same language as the user's message.",
+            "Generate a fitting title for this chat based on the user message. It must be short with only a few words. Never output anything other than the title, and never mention that you are an AI model. The title must be in the same language as the user's message.",
         },
         { role: "user", content: args.prompt },
       ],
-      model: "llama-3.1-8b-instant",
+      model: "llama3-70b-8192",
       max_completion_tokens: 100,
     });
 
@@ -140,7 +144,7 @@ export const generateChatTitle = internalAction({
       throw new Error("No response from Groq");
     }
 
-    await ctx.runMutation(api.chats.updateChatTitle, {
+    await ctx.runMutation(internal.chats.updateChatTitle, {
       chatId: args.chatId,
       title: response.choices[0].message.content,
     });

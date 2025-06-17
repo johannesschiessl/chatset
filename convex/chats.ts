@@ -1,9 +1,14 @@
 import { api, internal } from "./_generated/api";
-import { internalAction, mutation, query } from "./_generated/server";
+import { internalAction, mutation,
+query } from "./_generated/server";
 import { v } from "convex/values";
 import Groq from "groq-sdk";
+import { verifyAuth } from "./helpers";
 
 export const getChatsGroupedByDate = query({
+  args: {
+    sessionToken: v.string(),
+  },
   returns: v.array(
     v.object({
       date: v.string(),
@@ -12,12 +17,19 @@ export const getChatsGroupedByDate = query({
           _id: v.id("chats"),
           _creationTime: v.number(),
           title: v.string(),
+          userId: v.id("user"),
         }),
       ),
     }),
   ),
-  handler: async (ctx) => {
-    const chats = await ctx.db.query("chats").order("desc").take(100);
+  handler: async (ctx, args) => {
+    const auth: any = await verifyAuth(ctx, args.sessionToken); // FIXME: make this not any, I'm SO sorry...
+
+    const chats = await ctx.db
+      .query("chats")
+      .withIndex("by_user", (q) => q.eq("userId", auth.user._id))
+      .order("desc")
+      .take(100);
 
     const groupedChats = new Map<string, typeof chats>();
 
@@ -63,9 +75,17 @@ export const startChatWithFirstMessage = mutation({
     clientId: v.string(),
     model: v.string(),
     forceTool: v.optional(v.string()),
+    sessionToken: v.string(),
   },
+  returns: v.id("chats"),
   handler: async (ctx, args) => {
-    const chatId = await ctx.db.insert("chats", { title: "New Chat" });
+    console.log("[CHAT] Starting chat with first message. ARGS: ", args);
+    const auth: any = await verifyAuth(ctx, args.sessionToken); // FIXME: make this not any, I'm SO sorry...
+
+    const chatId = await ctx.db.insert("chats", {
+      title: "New Chat",
+      userId: auth.user._id,
+    });
 
     await ctx.scheduler.runAfter(0, api.messages.sendMessage, {
       prompt: args.prompt,
@@ -73,6 +93,7 @@ export const startChatWithFirstMessage = mutation({
       clientId: args.clientId,
       model: args.model,
       forceTool: args.forceTool,
+      sessionToken: args.sessionToken,
     });
 
     await ctx.scheduler.runAfter(0, internal.chats.generateChatTitle, {

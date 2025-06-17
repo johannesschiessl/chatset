@@ -1,4 +1,5 @@
 import { models, toolConfigs, ToolName } from "../models";
+import { internal } from "./_generated/api";
 
 export function getTools(model: string, forceTool?: string) {
   const modelConfig = models[model as keyof typeof models];
@@ -26,4 +27,33 @@ export function getTools(model: string, forceTool?: string) {
     tools,
     ...(toolChoice && { toolChoice }),
   };
+}
+
+export async function verifyAuth(ctx: any, sessionToken: string) {
+  // FIXME: make this not any
+  console.log(
+    "[VERIFY AUTH] Verifying auth, Received sessionToken: ",
+    sessionToken,
+  );
+  console.log(sessionToken);
+  const session = await ctx.runQuery(internal.betterAuth.getSession, {
+    sessionToken: sessionToken,
+  });
+
+  console.log(session);
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  console.log("[VERIFY AUTH] Session: ", session);
+
+  const user = await ctx.db
+    .query("user")
+    .filter((q: any) => q.eq(q.field("_id"), session.userId)) // FIXME: make this not any, I'm SO sorry...
+    .first();
+
+  console.log("[VERIFY AUTH] User: ", user);
+
+  return { session, user };
 }

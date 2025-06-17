@@ -11,13 +11,16 @@ import { StreamId } from "@convex-dev/persistent-text-streaming";
 import { streamingComponent } from "./streaming";
 import { streamText } from "ai";
 import { models } from "../models";
-import { getTools } from "./helpers";
+import { getTools, verifyAuth } from "./helpers";
 
 export const getMessages = query({
   args: {
     chatId: v.id("chats"),
+    sessionToken: v.string(),
   },
   handler: async (ctx, args) => {
+    await verifyAuth(ctx, args.sessionToken);
+
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_chat", (q) => q.eq("chat", args.chatId))
@@ -31,12 +34,14 @@ export const createUserMessage = internalMutation({
   args: {
     content: v.string(),
     chatId: v.id("chats"),
+    userId: v.id("user"),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("messages", {
       role: "user",
       content: args.content,
       chat: args.chatId,
+      userId: args.userId,
     });
   },
 });
@@ -48,6 +53,7 @@ export const createAssistantMessage = internalMutation({
     clientId: v.string(),
     model: v.string(),
     forceTool: v.optional(v.string()),
+    userId: v.id("user"),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("messages", {
@@ -57,6 +63,7 @@ export const createAssistantMessage = internalMutation({
       clientId: args.clientId,
       model: args.model,
       forceTool: args.forceTool,
+      userId: args.userId,
     });
   },
 });
@@ -80,11 +87,15 @@ export const sendMessage = mutation({
     clientId: v.string(),
     model: v.string(),
     forceTool: v.optional(v.string()),
+    sessionToken: v.string(),
   },
   handler: async (ctx, args) => {
+    const auth = await verifyAuth(ctx, args.sessionToken);
+
     await ctx.runMutation(internal.messages.createUserMessage, {
       content: args.prompt,
       chatId: args.chatId,
+      userId: auth.user._id,
     });
 
     const streamId = await streamingComponent.createStream(ctx);
@@ -95,6 +106,7 @@ export const sendMessage = mutation({
       clientId: args.clientId,
       model: args.model,
       forceTool: args.forceTool,
+      userId: auth.user._id,
     });
   },
 });
@@ -154,7 +166,7 @@ export const getHistory = internalQuery({
 
 export const streamAssistantMessage = httpAction(async (ctx, request) => {
   const body = (await request.json()) as { streamId: string };
-
+  // TODO: auth the user here
   console.log("[STREAM ASSISTANT MESSAGE] BODY: ", body);
 
   const response = await streamingComponent.stream(

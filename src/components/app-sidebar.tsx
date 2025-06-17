@@ -116,7 +116,7 @@ export function AppSidebar({
                   {session.data?.user?.name?.charAt(0)?.toUpperCase() ?? "U"}
                 </AvatarFallback>
               </Avatar>
-              {session.data?.user?.name ?? "Loading..."}
+              {session.data?.user?.name?.split(" ")[0] ?? "Loading..."}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

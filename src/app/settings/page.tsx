@@ -56,7 +56,7 @@ export default function SettingsPage() {
             </AvatarFallback>
           </Avatar>
           <h2 className="mb-2 text-xl font-semibold">
-            {session.data?.user?.name ?? "Loading..."}
+            {session.data?.user?.name?.split(" ")[0] ?? "Loading..."}
           </h2>
           <p className="text-muted-foreground cursor-pointer text-sm blur-xs transition-all hover:blur-none">
             {session.data?.user?.email ?? "Loading..."}

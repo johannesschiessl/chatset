@@ -12,13 +12,17 @@ export default defineSchema({
     updatedAt: v.string(),
     userId: v.id("user"),
   }),
-  chats: defineTable({ title: v.string() }),
+  chats: defineTable({
+    title: v.string(),
+    userId: v.id("user"),
+  }).index("by_user", ["userId"]),
   messages: defineTable(
     v.union(
       v.object({
         chat: v.id("chats"),
         content: v.string(),
         role: v.literal("user"),
+        userId: v.id("user"),
       }),
       v.object({
         chat: v.id("chats"),
@@ -28,6 +32,7 @@ export default defineSchema({
         model: v.string(),
         role: v.literal("assistant"),
         stream: v.string(),
+        userId: v.id("user"),
       }),
     ),
   ).index("by_chat", ["chat"]),

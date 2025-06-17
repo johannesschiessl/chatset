@@ -2,17 +2,28 @@
 
 import UserMessage from "@/components/user-message";
 import AssistantMessage from "@/components/assistant-message";
-import { Preloaded, usePreloadedQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { StreamId } from "@convex-dev/persistent-text-streaming";
 import { useRef, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { Id } from "../../convex/_generated/dataModel";
+import { authClient } from "@/lib/auth-client";
 
-interface MessagesListProps {
-  preloadedMessages: Preloaded<typeof api.messages.getMessages>;
-}
+export default function MessagesList() {
+  const params = useParams();
+  const chatId = params.chatId as Id<"chats">;
+  const session = authClient.useSession();
 
-export default function MessagesList({ preloadedMessages }: MessagesListProps) {
-  const messages = usePreloadedQuery(preloadedMessages);
+  const messages = useQuery(
+    api.messages.getMessages,
+    session.data?.session.token
+      ? {
+          chatId,
+          sessionToken: session.data.session.token,
+        }
+      : "skip",
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {

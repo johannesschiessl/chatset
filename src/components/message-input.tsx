@@ -12,6 +12,7 @@ import ModelSelection from "./model-selection";
 import ToolSelection from "./tool-selection";
 import { models, toolConfigs } from "../../models";
 import { authClient } from "@/lib/auth-client";
+import { Badge } from "@/components/ui/badge";
 
 export default function MessageInput() {
   const searchParams = useSearchParams();
@@ -29,6 +30,7 @@ export default function MessageInput() {
   const [selectedModel, setSelectedModel] = useState({
     string: model,
     label: models[model as keyof typeof models]?.label,
+    api: models[model as keyof typeof models]?.api.badge,
   });
   const [selectedTool, setSelectedTool] = useState<{
     string?: string;
@@ -141,12 +143,19 @@ export default function MessageInput() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ModelSelection
-            onSelect={(modelString, modelLabel) =>
-              setSelectedModel({ string: modelString, label: modelLabel })
+            onSelect={(modelString, modelLabel, modelApi) =>
+              setSelectedModel({
+                string: modelString,
+                label: modelLabel,
+                api: modelApi,
+              })
             }
           >
             <Button variant="outline" className="gap-2">
               {selectedModel.label}
+              <Badge variant="outline" className="ml-2">
+                {selectedModel.api} API
+              </Badge>
               <ChevronDownIcon className="h-4 w-4" />
             </Button>
           </ModelSelection>

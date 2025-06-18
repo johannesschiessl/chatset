@@ -8,12 +8,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { models, modelProviders } from "../../models";
+import { models, modelAPIs, modelProviders } from "../../models";
 import { Badge } from "@/components/ui/badge";
 
 interface ModelSelectionProps {
   children: ReactNode;
-  onSelect: (modelString: string, modelLabel: string) => void;
+  onSelect: (modelString: string, modelLabel: string, modelApi: string) => void;
 }
 
 export default function ModelSelection({
@@ -22,11 +22,16 @@ export default function ModelSelection({
 }: ModelSelectionProps) {
   const modelsByProvider = Object.entries(models).reduce(
     (acc, [modelKey, model]) => {
-      const providerKey = model.provider.label.toLowerCase();
-      if (!acc[providerKey]) {
-        acc[providerKey] = [];
+      const providerLabel = model.provider.label;
+      if (!acc[providerLabel]) {
+        acc[providerLabel] = [];
       }
-      acc[providerKey].push({ key: modelKey, ...model });
+      acc[providerLabel].push({
+        key: modelKey,
+        label: model.label,
+        api: model.api,
+        provider: model.provider,
+      });
       return acc;
     },
     {} as Record<
@@ -34,8 +39,8 @@ export default function ModelSelection({
       Array<{
         key: string;
         label: string;
-        provider: typeof modelProviders.openai;
-        byok: boolean;
+        api: (typeof modelAPIs)[keyof typeof modelAPIs];
+        provider: (typeof modelProviders)[keyof typeof modelProviders];
       }>
     >,
   );
@@ -45,30 +50,21 @@ export default function ModelSelection({
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
         {Object.entries(modelsByProvider).map(
-          ([providerKey, providerModels]) => (
-            <DropdownMenuSub key={providerKey}>
-              <DropdownMenuSubTrigger>
-                {
-                  modelProviders[providerKey as keyof typeof modelProviders]
-                    .label
-                }
-              </DropdownMenuSubTrigger>
+          ([providerLabel, providerModels]) => (
+            <DropdownMenuSub key={providerLabel}>
+              <DropdownMenuSubTrigger>{providerLabel}</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 {providerModels.map((model) => (
                   <DropdownMenuItem
                     key={model.key}
-                    onClick={() => onSelect(model.key, model.label)}
+                    onClick={() =>
+                      onSelect(model.key, model.label, model.api.badge)
+                    }
                   >
                     {model.label}
-                    {model.byok ? (
-                      <Badge variant="outline" className="ml-2">
-                        BYOK
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="ml-2">
-                        FREE
-                      </Badge>
-                    )}
+                    <Badge variant="outline" className="ml-2">
+                      {model.api.badge} API
+                    </Badge>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuSubContent>

@@ -36,7 +36,14 @@ export default defineSchema({
       }),
     ),
   ).index("by_chat", ["chat"]),
-
+  apiKeys: defineTable({
+    userId: v.id("user"),
+    openai: v.optional(v.string()),
+    groq: v.optional(v.string()),
+    anthropic: v.optional(v.string()),
+    google: v.optional(v.string()),
+    openrouter: v.optional(v.string()),
+  }).index("by_user", ["userId"]),
   session: defineTable({
     expiresAt: v.string(),
     ipAddress: v.string(),

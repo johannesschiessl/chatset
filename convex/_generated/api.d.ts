@@ -12,6 +12,7 @@ import type * as betterAuth from "../betterAuth.js";
 import type * as chats from "../chats.js";
 import type * as helpers from "../helpers.js";
 import type * as http from "../http.js";
+import type * as keys from "../keys.js";
 import type * as messages from "../messages.js";
 import type * as streaming from "../streaming.js";
 
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   chats: typeof chats;
   helpers: typeof helpers;
   http: typeof http;
+  keys: typeof keys;
   messages: typeof messages;
   streaming: typeof streaming;
 }>;

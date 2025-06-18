@@ -5,12 +5,108 @@ import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2, Save } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState, useEffect } from "react";
+import { api } from "../../../convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
 
 export default function SettingsPage() {
   const session = authClient.useSession();
+
+  const apiKeysPreview = useQuery(
+    api.keys.getApiKeysPreview,
+    session.isPending || !session.data?.session?.token
+      ? "skip"
+      : {
+          sessionToken: session.data.session.token,
+        },
+  );
+
+  const [apiKeys, setApiKeys] = useState<
+    {
+      provider: string;
+      key: string;
+      isExisting: boolean;
+    }[]
+  >([
+    { provider: "openai", key: "", isExisting: false },
+    { provider: "groq", key: "", isExisting: false },
+    { provider: "anthropic", key: "", isExisting: false },
+    { provider: "google", key: "", isExisting: false },
+    { provider: "openrouter", key: "", isExisting: false },
+  ]);
+
+  // Update apiKeys when apiKeysPreview changes
+  useEffect(() => {
+    if (apiKeysPreview) {
+      const updatedKeys = [
+        { provider: "openai", key: "", isExisting: false },
+        { provider: "groq", key: "", isExisting: false },
+        { provider: "anthropic", key: "", isExisting: false },
+        { provider: "google", key: "", isExisting: false },
+        { provider: "openrouter", key: "", isExisting: false },
+      ].map((defaultKey) => {
+        const existingKey = apiKeysPreview.find(
+          (k) => k.provider === defaultKey.provider,
+        );
+        if (existingKey) {
+          return {
+            provider: existingKey.provider,
+            key: existingKey.key, // This is already the preview from the backend
+            isExisting: true,
+          };
+        }
+        return defaultKey;
+      });
+      setApiKeys(updatedKeys);
+    }
+  }, [apiKeysPreview]);
+
+  const saveApiKeyMutation = useMutation(api.keys.saveApiKey);
+  const removeApiKeyMutation = useMutation(api.keys.removeApiKey);
+
+  async function saveApiKey(provider: string) {
+    if (!session.data?.session?.token) return;
+
+    const keyData = apiKeys.find((key) => key.provider === provider);
+    if (!keyData || keyData.key.trim() === "" || keyData.isExisting) return;
+
+    await saveApiKeyMutation({
+      provider,
+      key: keyData.key,
+      sessionToken: session.data.session.token,
+    });
+
+    // Update local state to mark this key as existing
+    setApiKeys(
+      apiKeys.map((key) =>
+        key.provider === provider ? { ...key, isExisting: true } : key,
+      ),
+    );
+  }
+
+  async function deleteApiKey(provider: string) {
+    if (!session.data?.session?.token) return;
+
+    // Call the backend mutation to remove the API key from the database
+    await removeApiKeyMutation({
+      provider,
+      sessionToken: session.data.session.token,
+    });
+
+    // Update local state to reflect the deletion
+    setApiKeys(
+      apiKeys.map((key) =>
+        key.provider === provider
+          ? { provider, key: "", isExisting: false }
+          : key,
+      ),
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -91,12 +187,343 @@ export default function SettingsPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="api-keys" className="mt-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">API Keys</h3>
-                <p className="text-muted-foreground">
-                  Manage your API keys and integrations here.
-                </p>
+            <TabsContent value="api-keys" className="mt-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="openai-api-key">OpenAI</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="openai-api-key"
+                    type="text"
+                    placeholder={
+                      apiKeys.find((key) => key.provider === "openai")
+                        ?.isExisting
+                        ? ""
+                        : "API Key"
+                    }
+                    disabled={
+                      apiKeys.find((key) => key.provider === "openai")
+                        ?.isExisting
+                    }
+                    value={
+                      apiKeys.find((key) => key.provider === "openai")?.key ??
+                      ""
+                    }
+                    onChange={(e) => {
+                      const existingIndex = apiKeys.findIndex(
+                        (key) => key.provider === "openai",
+                      );
+                      if (existingIndex >= 0) {
+                        const newKeys = [...apiKeys];
+                        newKeys[existingIndex] = {
+                          ...newKeys[existingIndex],
+                          key: e.target.value,
+                        };
+                        setApiKeys(newKeys);
+                      } else {
+                        setApiKeys([
+                          ...apiKeys,
+                          {
+                            provider: "openai",
+                            key: e.target.value,
+                            isExisting: false,
+                          },
+                        ]);
+                      }
+                    }}
+                  />
+                  {apiKeys.find((key) => key.provider === "openai")
+                    ?.isExisting ? (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => deleteApiKey("openai")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => saveApiKey("openai")}
+                      disabled={
+                        !apiKeys
+                          .find((key) => key.provider === "openai")
+                          ?.key?.trim()
+                      }
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="groq-api-key">Groq</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="groq-api-key"
+                    type="text"
+                    placeholder={
+                      apiKeys.find((key) => key.provider === "groq")?.isExisting
+                        ? ""
+                        : "API Key"
+                    }
+                    disabled={
+                      apiKeys.find((key) => key.provider === "groq")?.isExisting
+                    }
+                    value={
+                      apiKeys.find((key) => key.provider === "groq")?.key ?? ""
+                    }
+                    onChange={(e) => {
+                      const existingIndex = apiKeys.findIndex(
+                        (key) => key.provider === "groq",
+                      );
+                      if (existingIndex >= 0) {
+                        const newKeys = [...apiKeys];
+                        newKeys[existingIndex] = {
+                          ...newKeys[existingIndex],
+                          key: e.target.value,
+                        };
+                        setApiKeys(newKeys);
+                      } else {
+                        setApiKeys([
+                          ...apiKeys,
+                          {
+                            provider: "groq",
+                            key: e.target.value,
+                            isExisting: false,
+                          },
+                        ]);
+                      }
+                    }}
+                  />
+                  {apiKeys.find((key) => key.provider === "groq")
+                    ?.isExisting ? (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => deleteApiKey("groq")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => saveApiKey("groq")}
+                      disabled={
+                        !apiKeys
+                          .find((key) => key.provider === "groq")
+                          ?.key?.trim()
+                      }
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="anthropic-api-key">Anthropic</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="anthropic-api-key"
+                    type="text"
+                    placeholder={
+                      apiKeys.find((key) => key.provider === "anthropic")
+                        ?.isExisting
+                        ? ""
+                        : "API Key"
+                    }
+                    disabled={
+                      apiKeys.find((key) => key.provider === "anthropic")
+                        ?.isExisting
+                    }
+                    value={
+                      apiKeys.find((key) => key.provider === "anthropic")
+                        ?.key ?? ""
+                    }
+                    onChange={(e) => {
+                      const existingIndex = apiKeys.findIndex(
+                        (key) => key.provider === "anthropic",
+                      );
+                      if (existingIndex >= 0) {
+                        const newKeys = [...apiKeys];
+                        newKeys[existingIndex] = {
+                          ...newKeys[existingIndex],
+                          key: e.target.value,
+                        };
+                        setApiKeys(newKeys);
+                      } else {
+                        setApiKeys([
+                          ...apiKeys,
+                          {
+                            provider: "anthropic",
+                            key: e.target.value,
+                            isExisting: false,
+                          },
+                        ]);
+                      }
+                    }}
+                  />
+                  {apiKeys.find((key) => key.provider === "anthropic")
+                    ?.isExisting ? (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => deleteApiKey("anthropic")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => saveApiKey("anthropic")}
+                      disabled={
+                        !apiKeys
+                          .find((key) => key.provider === "anthropic")
+                          ?.key?.trim()
+                      }
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="google-api-key">Google</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="google-api-key"
+                    type="text"
+                    placeholder={
+                      apiKeys.find((key) => key.provider === "google")
+                        ?.isExisting
+                        ? ""
+                        : "API Key"
+                    }
+                    disabled={
+                      apiKeys.find((key) => key.provider === "google")
+                        ?.isExisting
+                    }
+                    value={
+                      apiKeys.find((key) => key.provider === "google")?.key ??
+                      ""
+                    }
+                    onChange={(e) => {
+                      const existingIndex = apiKeys.findIndex(
+                        (key) => key.provider === "google",
+                      );
+                      if (existingIndex >= 0) {
+                        const newKeys = [...apiKeys];
+                        newKeys[existingIndex] = {
+                          ...newKeys[existingIndex],
+                          key: e.target.value,
+                        };
+                        setApiKeys(newKeys);
+                      } else {
+                        setApiKeys([
+                          ...apiKeys,
+                          {
+                            provider: "google",
+                            key: e.target.value,
+                            isExisting: false,
+                          },
+                        ]);
+                      }
+                    }}
+                  />
+                  {apiKeys.find((key) => key.provider === "google")
+                    ?.isExisting ? (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => deleteApiKey("google")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => saveApiKey("google")}
+                      disabled={
+                        !apiKeys
+                          .find((key) => key.provider === "google")
+                          ?.key?.trim()
+                      }
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="openrouter-api-key">OpenRouter</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="openrouter-api-key"
+                    type="text"
+                    placeholder={
+                      apiKeys.find((key) => key.provider === "openrouter")
+                        ?.isExisting
+                        ? ""
+                        : "API Key"
+                    }
+                    disabled={
+                      apiKeys.find((key) => key.provider === "openrouter")
+                        ?.isExisting
+                    }
+                    value={
+                      apiKeys.find((key) => key.provider === "openrouter")
+                        ?.key ?? ""
+                    }
+                    onChange={(e) => {
+                      const existingIndex = apiKeys.findIndex(
+                        (key) => key.provider === "openrouter",
+                      );
+                      if (existingIndex >= 0) {
+                        const newKeys = [...apiKeys];
+                        newKeys[existingIndex] = {
+                          ...newKeys[existingIndex],
+                          key: e.target.value,
+                        };
+                        setApiKeys(newKeys);
+                      } else {
+                        setApiKeys([
+                          ...apiKeys,
+                          {
+                            provider: "openrouter",
+                            key: e.target.value,
+                            isExisting: false,
+                          },
+                        ]);
+                      }
+                    }}
+                  />
+                  {apiKeys.find((key) => key.provider === "openrouter")
+                    ?.isExisting ? (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => deleteApiKey("openrouter")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => saveApiKey("openrouter")}
+                      disabled={
+                        !apiKeys
+                          .find((key) => key.provider === "openrouter")
+                          ?.key?.trim()
+                      }
+                    >
+                      <Save className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </TabsContent>
 

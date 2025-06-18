@@ -29,31 +29,67 @@ export function getTools(model: string, forceTool?: string) {
   };
 }
 
+export function getRequiredApiKeyForModel(
+  modelName: string,
+  apiKeys: {
+    openai?: string;
+    groq?: string;
+    anthropic?: string;
+    google?: string;
+    openrouter?: string;
+  } | null,
+): string | null {
+  if (!apiKeys) return null;
+
+  // OpenAI models (via OpenAI API)
+  if (
+    modelName.startsWith("gpt-") ||
+    modelName.startsWith("o3") ||
+    modelName.startsWith("o4-")
+  ) {
+    return apiKeys.openai || null;
+  }
+
+  // Anthropic models (via Anthropic API)
+  if (modelName.startsWith("claude-") && !modelName.includes("openrouter")) {
+    return apiKeys.anthropic || null;
+  }
+
+  // Google models (via Google API)
+  if (modelName.startsWith("gemini-") && !modelName.includes("openrouter")) {
+    return apiKeys.google || null;
+  }
+
+  // Groq models
+  if (
+    modelName.includes("deepseek-r1") ||
+    (modelName.includes("llama-") && !modelName.includes("openrouter"))
+  ) {
+    return apiKeys.groq || null;
+  }
+
+  // OpenRouter models
+  if (modelName.includes("openrouter")) {
+    return apiKeys.openrouter || null;
+  }
+
+  return null;
+}
+
 export async function verifyAuth(ctx: any, sessionToken: string) {
   // FIXME: make this not any
-  console.log(
-    "[VERIFY AUTH] Verifying auth, Received sessionToken: ",
-    sessionToken,
-  );
-  console.log(sessionToken);
   const session = await ctx.runQuery(internal.betterAuth.getSession, {
     sessionToken: sessionToken,
   });
-
-  console.log(session);
 
   if (!session) {
     throw new Error("Unauthorized");
   }
 
-  console.log("[VERIFY AUTH] Session: ", session);
-
   const user = await ctx.db
     .query("user")
     .filter((q: any) => q.eq(q.field("_id"), session.userId)) // FIXME: make this not any, I'm SO sorry...
     .first();
-
-  console.log("[VERIFY AUTH] User: ", user);
 
   return { session, user };
 }

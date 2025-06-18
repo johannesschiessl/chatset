@@ -214,6 +214,8 @@ interface AssistantMessageProps {
   clientId: string;
   model: string;
   content?: string;
+  error?: string;
+  generationDone: boolean;
 }
 
 export default function AssistantMessage({
@@ -221,13 +223,15 @@ export default function AssistantMessage({
   streamId,
   model,
   content,
+  generationDone,
+  error,
 }: AssistantMessageProps) {
   let driven = false;
   if (clientId === window.localStorage.getItem("clientId")) {
     driven = true;
   }
 
-  // TODO: figure out how to only call this if absolutely necessary
+  // Always call useStream but disable it when generation is done
   const streamResult = useStream(
     api.streaming.getStreamBody,
     new URL(process.env.NEXT_PUBLIC_CONVEX_HTTP_URL + "/streamMessage"),
@@ -235,8 +239,8 @@ export default function AssistantMessage({
     streamId,
   );
 
-  const text = content || streamResult.text || "";
-  const status = content ? "done" : streamResult.status;
+  const text = generationDone ? content || "" : streamResult.text || "";
+  const status = generationDone ? "done" : streamResult.status;
 
   const { thinkingSections, mainContent } = extractThinkingSections(text);
 
@@ -251,11 +255,11 @@ export default function AssistantMessage({
           </div>
         </div>
       )}
-      {status === "error" && (
+      {(status === "error" || error) && (
         <Alert variant="destructive">
           <AlertCircleIcon />
           <AlertTitle>Sorry, something went wrong.</AlertTitle>
-          <AlertDescription>Please try again.</AlertDescription>
+          <AlertDescription>{error || "Please try again."}</AlertDescription>
         </Alert>
       )}
       {status === "timeout" && (
@@ -291,7 +295,7 @@ export default function AssistantMessage({
       )}
 
       <MarkdownContent content={mainContent} />
-      {status === "done" && (
+      {status === "done" && !error && generationDone && (
         <span className="text-muted-foreground text-xs">
           Generated with {models[model as keyof typeof models].label}
         </span>

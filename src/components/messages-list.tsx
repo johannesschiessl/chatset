@@ -56,6 +56,8 @@ export default function MessagesList() {
               streamId={message.stream as StreamId}
               clientId={message.clientId}
               content={message.content}
+              error={message.error}
+              generationDone={message.generationDone}
             />
           )}
         </div>

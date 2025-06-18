@@ -10,8 +10,8 @@ import { api, internal } from "./_generated/api";
 import { StreamId } from "@convex-dev/persistent-text-streaming";
 import { streamingComponent } from "./streaming";
 import { streamText } from "ai";
-import { models } from "../models";
-import { getTools, verifyAuth } from "./helpers";
+import { createModels } from "../models";
+import { getRequiredApiKeyForModel, getTools, verifyAuth } from "./helpers";
 
 export const getMessages = query({
   args: {
@@ -64,6 +64,7 @@ export const createAssistantMessage = internalMutation({
       model: args.model,
       forceTool: args.forceTool,
       userId: args.userId,
+      generationDone: false,
     });
   },
 });
@@ -76,6 +77,20 @@ export const addContentToAssistantMessage = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.messageId, {
       content: args.content,
+      generationDone: true,
+    });
+  },
+});
+
+export const addErrorToAssistantMessage = internalMutation({
+  args: {
+    error: v.string(),
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, {
+      error: args.error,
+      generationDone: true,
     });
   },
 });
@@ -165,9 +180,9 @@ export const getHistory = internalQuery({
 });
 
 export const streamAssistantMessage = httpAction(async (ctx, request) => {
-  const body = (await request.json()) as { streamId: string };
-  // TODO: auth the user here
-  console.log("[STREAM ASSISTANT MESSAGE] BODY: ", body);
+  const body = (await request.json()) as {
+    streamId: string;
+  };
 
   const response = await streamingComponent.stream(
     ctx,
@@ -190,8 +205,38 @@ export const streamAssistantMessage = httpAction(async (ctx, request) => {
         throw new Error("User message found for streamId: " + streamId);
       }
 
+      const apiKeys = await ctx.runQuery(internal.keys.getApiKeys, {
+        userId: message.userId,
+      });
+
+      console.log(apiKeys);
+
+      const models = createModels(
+        apiKeys ?? {
+          openai: "",
+          groq: "",
+          anthropic: "",
+          google: "",
+          openrouter: "",
+        },
+      );
+
       if (!models[message.model as keyof typeof models]) {
+        await ctx.runMutation(internal.messages.addErrorToAssistantMessage, {
+          error: "Model not found: " + message.model,
+          messageId: message._id,
+        });
         throw new Error("Model not found: " + message.model);
+      }
+
+      const requiredApiKey = getRequiredApiKeyForModel(message.model, apiKeys);
+
+      if (!requiredApiKey) {
+        await ctx.runMutation(internal.messages.addErrorToAssistantMessage, {
+          error: `API key not configured for model: ${message.model}`,
+          messageId: message._id,
+        });
+        throw new Error(`API key not configured for model: ${message.model}`);
       }
 
       const { textStream } = streamText({
@@ -205,25 +250,24 @@ export const streamAssistantMessage = httpAction(async (ctx, request) => {
       for await (const textPart of textStream) {
         await append(textPart);
       }
+
+      const finalResponse = await ctx.runQuery(api.streaming.getStreamBody, {
+        streamId: body.streamId,
+      });
+
+      if (finalResponse.status === "error") {
+        await ctx.runMutation(internal.messages.addErrorToAssistantMessage, {
+          error: "An error occurred while generating the response.",
+          messageId: message._id,
+        });
+      } else {
+        await ctx.runMutation(internal.messages.addContentToAssistantMessage, {
+          messageId: message._id,
+          content: finalResponse.text,
+        });
+      }
     },
   );
-
-  const message = await ctx.runQuery(internal.messages.getMessageByStreamId, {
-    streamId: body.streamId,
-  });
-
-  if (!message) {
-    throw new Error("Message not found for streamId: " + body.streamId);
-  }
-
-  const finalResponse = await ctx.runQuery(api.streaming.getStreamBody, {
-    streamId: body.streamId,
-  });
-
-  await ctx.runMutation(internal.messages.addContentToAssistantMessage, {
-    messageId: message._id,
-    content: finalResponse.text,
-  });
 
   response.headers.set("Access-Control-Allow-Origin", "*");
   response.headers.set("Vary", "Origin");

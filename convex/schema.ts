@@ -31,6 +31,8 @@ export default defineSchema({
         forceTool: v.optional(v.string()),
         model: v.string(),
         role: v.literal("assistant"),
+        generationDone: v.boolean(),
+        error: v.optional(v.string()),
         stream: v.string(),
         userId: v.id("user"),
       }),

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery, mutation, query } from "./_generated/server";
-import { verifyAuth } from "./helpers";
+import { decryptApiKey, encryptApiKey, verifyAuth } from "./helpers";
 
 export const getApiKeys = internalQuery({
   args: {
@@ -16,13 +16,49 @@ export const getApiKeys = internalQuery({
       return null;
     }
 
-    return {
-      openai: apiKeys.openai,
-      groq: apiKeys.groq,
-      anthropic: apiKeys.anthropic,
-      google: apiKeys.google,
-      openrouter: apiKeys.openrouter,
-    };
+    const decryptedKeys: any = {};
+
+    if (apiKeys.openai) {
+      try {
+        decryptedKeys.openai = await decryptApiKey(apiKeys.openai);
+      } catch (error) {
+        console.error("Failed to decrypt OpenAI key:", error);
+      }
+    }
+
+    if (apiKeys.groq) {
+      try {
+        decryptedKeys.groq = await decryptApiKey(apiKeys.groq);
+      } catch (error) {
+        console.error("Failed to decrypt Groq key:", error);
+      }
+    }
+
+    if (apiKeys.anthropic) {
+      try {
+        decryptedKeys.anthropic = await decryptApiKey(apiKeys.anthropic);
+      } catch (error) {
+        console.error("Failed to decrypt Anthropic key:", error);
+      }
+    }
+
+    if (apiKeys.google) {
+      try {
+        decryptedKeys.google = await decryptApiKey(apiKeys.google);
+      } catch (error) {
+        console.error("Failed to decrypt Google key:", error);
+      }
+    }
+
+    if (apiKeys.openrouter) {
+      try {
+        decryptedKeys.openrouter = await decryptApiKey(apiKeys.openrouter);
+      } catch (error) {
+        console.error("Failed to decrypt OpenRouter key:", error);
+      }
+    }
+
+    return decryptedKeys;
   },
 });
 
@@ -42,47 +78,66 @@ export const getApiKeysPreview = query({
       return null;
     }
 
-    if (!apiKeys) {
-      return null;
-    }
-
     const result = [];
 
     if (apiKeys.openai) {
-      result.push({
-        provider: "openai",
-        key: apiKeys.openai.slice(0, 4) + "..." + apiKeys.openai.slice(-4),
-      });
+      try {
+        const decryptedKey = await decryptApiKey(apiKeys.openai);
+        result.push({
+          provider: "openai",
+          key: decryptedKey.slice(0, 4) + "..." + decryptedKey.slice(-4),
+        });
+      } catch (error) {
+        console.error("Failed to decrypt OpenAI key for preview:", error);
+      }
     }
 
     if (apiKeys.groq) {
-      result.push({
-        provider: "groq",
-        key: apiKeys.groq.slice(0, 4) + "..." + apiKeys.groq.slice(-4),
-      });
+      try {
+        const decryptedKey = await decryptApiKey(apiKeys.groq);
+        result.push({
+          provider: "groq",
+          key: decryptedKey.slice(0, 4) + "..." + decryptedKey.slice(-4),
+        });
+      } catch (error) {
+        console.error("Failed to decrypt Groq key for preview:", error);
+      }
     }
 
     if (apiKeys.anthropic) {
-      result.push({
-        provider: "anthropic",
-        key:
-          apiKeys.anthropic.slice(0, 4) + "..." + apiKeys.anthropic.slice(-4),
-      });
+      try {
+        const decryptedKey = await decryptApiKey(apiKeys.anthropic);
+        result.push({
+          provider: "anthropic",
+          key: decryptedKey.slice(0, 4) + "..." + decryptedKey.slice(-4),
+        });
+      } catch (error) {
+        console.error("Failed to decrypt Anthropic key for preview:", error);
+      }
     }
 
     if (apiKeys.google) {
-      result.push({
-        provider: "google",
-        key: apiKeys.google.slice(0, 4) + "..." + apiKeys.google.slice(-4),
-      });
+      try {
+        const decryptedKey = await decryptApiKey(apiKeys.google);
+        result.push({
+          provider: "google",
+          key: decryptedKey.slice(0, 4) + "..." + decryptedKey.slice(-4),
+        });
+      } catch (error) {
+        console.error("Failed to decrypt Google key for preview:", error);
+      }
     }
 
     if (apiKeys.openrouter) {
-      result.push({
-        provider: "openrouter",
-        key:
-          apiKeys.openrouter.slice(0, 4) + "..." + apiKeys.openrouter.slice(-4),
-      });
+      try {
+        const decryptedKey = await decryptApiKey(apiKeys.openrouter);
+        result.push({
+          provider: "openrouter",
+          key: decryptedKey.slice(0, 4) + "..." + decryptedKey.slice(-4),
+        });
+      } catch (error) {
+        console.error("Failed to decrypt OpenRouter key for preview:", error);
+      }
     }
 
     return result;
@@ -100,6 +155,8 @@ export const saveApiKey = mutation({
     const { provider, key, sessionToken } = args;
     const auth = await verifyAuth(ctx, sessionToken);
 
+    const encryptedKey = await encryptApiKey(key);
+
     const existingApiKeys = await ctx.db
       .query("apiKeys")
       .withIndex("by_user", (q) => q.eq("userId", auth.user._id))
@@ -107,13 +164,13 @@ export const saveApiKey = mutation({
 
     if (existingApiKeys) {
       const updateFields: any = {};
-      updateFields[provider] = key;
+      updateFields[provider] = encryptedKey;
       await ctx.db.patch(existingApiKeys._id, updateFields);
     } else {
       const insertFields: any = {
         userId: auth.user._id,
       };
-      insertFields[provider] = key;
+      insertFields[provider] = encryptedKey;
       await ctx.db.insert("apiKeys", insertFields);
     }
 

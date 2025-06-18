@@ -164,7 +164,7 @@ export default function SettingsPage() {
             <h2 className="text-2xl font-bold">API Keys</h2>
             <p className="text-muted-foreground">
               Add your API keys to use the following APIs. API keys are stored
-              unencrypted on the server. I will fix this asap.
+              encrypted on the server.
             </p>
             <Alert>
               <InfoIcon className="h-4 w-4" />

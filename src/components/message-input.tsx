@@ -18,7 +18,7 @@ export default function MessageInput() {
   const searchParams = useSearchParams();
   const params = useParams();
   const chatId = params.chatId as Id<"chats">;
-  const model = searchParams.get("model") || "llama-3.1-8b";
+  const model = searchParams.get("model") || "gpt-4.1";
   const forceTool = searchParams.get("tool") || undefined;
 
   const sendMessage = useMutation(api.messages.sendMessage);

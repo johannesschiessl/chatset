@@ -13,7 +13,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -81,7 +80,6 @@ export function AppSidebar({
             <h1 className="text-lg font-bold">jxs Chat</h1>
             <Badge variant="outline">Beta</Badge>
           </div>
-          <SidebarTrigger />
         </div>
         <Link href="/">
           <Button className="w-full">New chat</Button>

@@ -1,5 +1,6 @@
 import { AppSidebarLoading } from "@/components/app-sidebar-loading";
 import AppSidebarWrapper from "@/components/app-sidebar-wrapper";
+import AppHeader from "@/components/app-header";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Suspense } from "react";
 
@@ -13,9 +14,14 @@ export default function CoreLayout({
       <Suspense fallback={<AppSidebarLoading />}>
         <AppSidebarWrapper />
       </Suspense>
-      <main className="mx-auto flex h-screen max-w-2xl flex-col pt-4">
-        {children}
-      </main>
+      <div className="flex h-screen w-full flex-col">
+        <div className="bg-background sticky top-0 z-40">
+          <AppHeader />
+        </div>
+        <main className="mx-auto flex max-w-3xl flex-1 flex-col overflow-auto pt-6">
+          {children}
+        </main>
+      </div>
     </SidebarProvider>
   );
 }

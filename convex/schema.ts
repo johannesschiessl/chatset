@@ -61,4 +61,10 @@ export default defineSchema({
     name: v.string(),
     updatedAt: v.string(),
   }),
+  verification: defineTable({
+    expiresAt: v.string(),
+    identifier: v.string(),
+    updatedAt: v.string(),
+    value: v.string(),
+  }),
 });

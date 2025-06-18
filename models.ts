@@ -52,7 +52,7 @@ export const createToolConfigs = (apiKeys: { openai?: string }) => {
   return {
     webSearch: {
       tool: openai.tools.webSearchPreview({
-        searchContextSize: "low", // TODO: Set to "high" after testing
+        searchContextSize: "high",
       }),
       name: "web_search_preview", // THIS HAS TO BE web_search_preview
       label: "Web Search",

@@ -13,6 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Id } from "../../convex/_generated/dataModel";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function ChatItem({
   chat,
@@ -80,6 +82,7 @@ export function AppSidebar({
             <h1 className="text-lg font-bold">jxs Chat</h1>
             <Badge variant="outline">Beta</Badge>
           </div>
+          <SidebarTrigger />
         </div>
         <Link href="/">
           <Button className="w-full">New chat</Button>
@@ -111,10 +114,12 @@ export function AppSidebar({
               <Avatar className="size-6">
                 <AvatarImage src={session.data?.user?.image ?? ""} />
                 <AvatarFallback>
-                  {session.data?.user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+                  {session.data?.user?.name?.charAt(0)?.toUpperCase() ?? ""}
                 </AvatarFallback>
               </Avatar>
-              {session.data?.user?.name?.split(" ")[0] ?? "Loading..."}
+              {session.data?.user?.name?.split(" ")[0] ?? (
+                <Skeleton className="h-6 w-24" />
+              )}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

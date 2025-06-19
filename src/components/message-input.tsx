@@ -13,7 +13,15 @@ import { models } from "../../models";
 import { authClient } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 
-export default function MessageInput() {
+interface MessageInputProps {
+  onMessageChange?: (hasMessage: boolean) => void;
+  message?: string;
+}
+
+export default function MessageInput({
+  onMessageChange,
+  message: initialMessage = "",
+}: MessageInputProps = {}) {
   const searchParams = useSearchParams();
   const params = useParams();
   const router = useRouter();
@@ -34,8 +42,23 @@ export default function MessageInput() {
     api.chats.startChatWithFirstMessage,
   );
 
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialMessage);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    onMessageChange?.(message.trim().length > 0);
+  }, [message, onMessageChange]);
+
+  useEffect(() => {
+    setMessage(initialMessage);
+  }, [initialMessage]);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.focus();
+    }
+  }, []);
 
   const updateSearchParams = useCallback(
     (updates: Record<string, string | undefined>) => {
@@ -145,7 +168,7 @@ export default function MessageInput() {
   );
 
   return (
-    <div className="bg-muted mx-auto w-2xl max-w-2xl rounded-md p-4">
+    <div className="bg-muted mx-auto w-3xl max-w-3xl rounded-md p-4">
       {/* Message input */}
       <div className="mb-3">
         <Textarea

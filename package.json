@@ -7,6 +7,7 @@
     "dev:convex": "convex dev",
     "build": "next build",
     "start": "next start",
+    "deploy:convex": "convex deploy",
     "lint": "next lint",
     "format": "prettier --write ."
   },

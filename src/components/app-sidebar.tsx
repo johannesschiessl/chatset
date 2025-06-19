@@ -24,7 +24,6 @@ import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Id } from "../../convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect } from "react";
 
 function ChatItem({
   chat,
@@ -74,13 +73,6 @@ export function AppSidebar({
   const pathname = usePathname();
 
   const router = useRouter();
-
-  useEffect(() => {
-    // I'm not even sure if this is needed...
-    router.prefetch("/");
-    router.prefetch("/chat/:chatId");
-    router.prefetch("/settings");
-  }, [router]);
 
   return (
     <Sidebar>

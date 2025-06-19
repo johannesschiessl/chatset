@@ -116,6 +116,12 @@ export const createModels = (apiKeys: {
       api: modelAPIs.anthropic,
     },
 
+    "gemini-2.5-flash-lite": {
+      label: "Gemini 2.5 Flash Lite",
+      model: google("gemini-2.5-flash-lite-preview-06-17"),
+      provider: modelProviders.google,
+      api: modelAPIs.google,
+    },
     "gemini-2.5-flash": {
       label: "Gemini 2.5 Flash",
       model: google("gemini-2.5-flash"),
@@ -178,6 +184,12 @@ export const createModels = (apiKeys: {
       label: "Claude 4 Opus",
       model: openrouter("anthropic/claude-opus-4"),
       provider: modelProviders.anthropic,
+      api: modelAPIs.openrouter,
+    },
+    "gemini-2.5-flash-lite-openrouter": {
+      label: "Gemini 2.5 Flash Lite",
+      model: openrouter("google/gemini-2.5-flash-lite-preview-06-17"),
+      provider: modelProviders.google,
       api: modelAPIs.openrouter,
     },
     "gemini-2.5-flash-openrouter": {

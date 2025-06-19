@@ -12,6 +12,7 @@ import { streamingComponent } from "./streaming";
 import { streamText } from "ai";
 import { createModels } from "../models";
 import { getRequiredApiKeyForModel, getTools, verifyAuth } from "./helpers";
+import { SYSTEM_PROMPT } from "../prompts";
 
 export const getMessages = query({
   args: {
@@ -241,6 +242,7 @@ export const streamAssistantMessage = httpAction(async (ctx, request) => {
 
       const { textStream } = streamText({
         model: models[message.model as keyof typeof models].model,
+        system: SYSTEM_PROMPT(message.model),
         messages: await ctx.runQuery(internal.messages.getHistory, {
           chatId: message.chat,
         }),

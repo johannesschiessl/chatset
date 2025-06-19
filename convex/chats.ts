@@ -8,6 +8,7 @@ import {
 import { v } from "convex/values";
 import Groq from "groq-sdk";
 import { verifyAuth } from "./helpers";
+import { GENERATE_TITLE_PROMPT } from "../prompts";
 
 export const getChatsGroupedByDate = query({
   args: {
@@ -131,8 +132,7 @@ export const generateChatTitle = internalAction({
       messages: [
         {
           role: "system",
-          content:
-            "Generate a fitting title for this chat based on the user message. It must be short with only a few words. Never output anything other than the title, and never mention that you are an AI model. The title must be in the same language as the user's message.",
+          content: GENERATE_TITLE_PROMPT(),
         },
         { role: "user", content: args.prompt },
       ],

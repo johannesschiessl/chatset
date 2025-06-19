@@ -263,11 +263,11 @@ export default function AssistantMessage({
           </div>
         </div>
       )}
-      {(status === "error" || error) && (
+      {error && (
         <Alert variant="destructive">
           <AlertCircleIcon />
           <AlertTitle>Sorry, something went wrong.</AlertTitle>
-          <AlertDescription>{error || "Please try again."}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       {status === "timeout" && (

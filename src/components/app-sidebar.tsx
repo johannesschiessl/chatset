@@ -74,6 +74,10 @@ export function AppSidebar({
 
   const router = useRouter();
 
+  router.prefetch("/");
+  router.prefetch("/chat/:chatId");
+  router.prefetch("/settings");
+
   return (
     <Sidebar>
       <SidebarHeader>

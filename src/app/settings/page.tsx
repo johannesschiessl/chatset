@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { api } from "../../../convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
   const session = authClient.useSession();
@@ -107,6 +108,9 @@ export default function SettingsPage() {
       ),
     );
   }
+
+  const router = useRouter();
+  router.prefetch("/");
 
   return (
     <div className="mx-auto max-w-6xl">

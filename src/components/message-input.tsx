@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, KeyboardEvent, useRef, useEffect } from "react";
+import { useState, KeyboardEvent, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowUpIcon, ChevronDownIcon, WrenchIcon } from "lucide-react";
@@ -17,9 +17,25 @@ import { Badge } from "@/components/ui/badge";
 export default function MessageInput() {
   const searchParams = useSearchParams();
   const params = useParams();
+  const router = useRouter();
+
   const chatId = params.chatId as Id<"chats">;
-  const model = searchParams.get("model") || "gpt-4.1";
-  const forceTool = searchParams.get("tool") || undefined;
+
+  const selectedModelString = searchParams.get("model") || "gpt-4.1";
+  const selectedToolString = searchParams.get("tool") || undefined;
+
+  const selectedModel = {
+    string: selectedModelString,
+    label: models[selectedModelString as keyof typeof models]?.label,
+    api: models[selectedModelString as keyof typeof models]?.api.badge,
+  };
+
+  const selectedTool = {
+    string: selectedToolString,
+    label: selectedToolString
+      ? toolConfigs[selectedToolString as keyof typeof toolConfigs]?.label
+      : undefined,
+  };
 
   const sendMessage = useMutation(api.messages.sendMessage);
   const startChatWithFirstMessage = useMutation(
@@ -27,34 +43,57 @@ export default function MessageInput() {
   );
 
   const [message, setMessage] = useState("");
-  const [selectedModel, setSelectedModel] = useState({
-    string: model,
-    label: models[model as keyof typeof models]?.label,
-    api: models[model as keyof typeof models]?.api.badge,
-  });
-  const [selectedTool, setSelectedTool] = useState<{
-    string?: string;
-    label?: string;
-  }>({
-    string: forceTool,
-    label: toolConfigs[forceTool as keyof typeof toolConfigs]?.label,
-  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const router = useRouter();
+  const updateSearchParams = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
 
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === undefined || value === null) {
+          newSearchParams.delete(key);
+        } else {
+          newSearchParams.set(key, value);
+        }
+      });
+
+      const newUrl = chatId
+        ? `/chat/${chatId}?${newSearchParams.toString()}`
+        : `/?${newSearchParams.toString()}`;
+
+      router.replace(newUrl);
+    },
+    [searchParams, chatId, router],
+  );
+
+  const handleModelSelect = useCallback(
+    (modelString: string) => {
+      updateSearchParams({ model: modelString });
+    },
+    [updateSearchParams],
+  );
+
+  const handleToolSelect = useCallback(
+    (toolString: string | undefined) => {
+      updateSearchParams({ tool: toolString });
+    },
+    [updateSearchParams],
+  );
+
+  // Auto-clear invalid tool selection when model changes
   useEffect(() => {
-    const modelConfig = models[selectedModel.string as keyof typeof models];
+    const modelConfig = models[selectedModelString as keyof typeof models];
     const availableTools = modelConfig?.tools || [];
 
     if (
-      selectedTool.string &&
-      !availableTools.includes(selectedTool.string as keyof typeof toolConfigs)
+      selectedToolString &&
+      !availableTools.includes(selectedToolString as keyof typeof toolConfigs)
     ) {
-      setSelectedTool({ string: undefined, label: "" });
+      updateSearchParams({ tool: undefined });
     }
-  }, [selectedModel.string, selectedTool.string]);
+  }, [selectedModelString, selectedToolString, updateSearchParams]);
 
+  // Auto-resize textarea
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -80,13 +119,13 @@ export default function MessageInput() {
       const newChatId = await startChatWithFirstMessage({
         prompt: message,
         clientId: window.localStorage.getItem("clientId") || "",
-        model: selectedModel.string,
-        forceTool: selectedTool.string,
+        model: selectedModelString,
+        forceTool: selectedToolString,
         sessionToken: session.data?.session.token ?? "",
       });
       router.push(
-        `/chat/${newChatId}?model=${selectedModel.string}${
-          selectedTool.string ? `&tool=${selectedTool.string}` : ""
+        `/chat/${newChatId}?model=${selectedModelString}${
+          selectedToolString ? `&tool=${selectedToolString}` : ""
         }`,
       );
       return;
@@ -98,9 +137,9 @@ export default function MessageInput() {
       sendMessage({
         prompt: trimmedMessage,
         chatId,
-        model: selectedModel.string,
+        model: selectedModelString,
         clientId: window.localStorage.getItem("clientId") || "",
-        forceTool: selectedTool.string,
+        forceTool: selectedToolString,
         sessionToken: session.data?.session.token || "",
       });
     }
@@ -113,11 +152,11 @@ export default function MessageInput() {
     }
   }
 
-  const modelConfig = models[selectedModel.string as keyof typeof models];
+  const modelConfig = models[selectedModelString as keyof typeof models];
   const hasTools = modelConfig?.tools && modelConfig.tools.length > 0;
 
-  const selectedToolIcon = selectedTool.string
-    ? toolConfigs[selectedTool.string as keyof typeof toolConfigs]?.icon
+  const selectedToolIcon = selectedToolString
+    ? toolConfigs[selectedToolString as keyof typeof toolConfigs]?.icon
     : null;
   const ToolIcon = selectedToolIcon || WrenchIcon;
 
@@ -143,13 +182,7 @@ export default function MessageInput() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ModelSelection
-            onSelect={(modelString, modelLabel, modelApi) =>
-              setSelectedModel({
-                string: modelString,
-                label: modelLabel,
-                api: modelApi,
-              })
-            }
+            onSelect={(modelString) => handleModelSelect(modelString)}
           >
             <Button variant="outline" className="gap-2">
               {selectedModel.label}
@@ -162,11 +195,9 @@ export default function MessageInput() {
 
           {hasTools && (
             <ToolSelection
-              selectedModel={selectedModel.string}
-              selectedTool={selectedTool.string}
-              onSelect={(toolString, toolLabel) =>
-                setSelectedTool({ string: toolString, label: toolLabel })
-              }
+              selectedModel={selectedModelString}
+              selectedTool={selectedToolString}
+              onSelect={(toolString) => handleToolSelect(toolString)}
             >
               <Button variant="outline" className="gap-2">
                 <ToolIcon className="h-4 w-4" />

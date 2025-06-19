@@ -84,7 +84,7 @@ export async function verifyAuth(ctx: any, sessionToken: string) {
 
   const user = await ctx.db
     .query("user")
-    .filter((q: any) => q.eq(q.field("_id"), session.userId)) // FIXME: make this not any, I'm SO sorry...
+    .filter((q: any) => q.eq(q.field("_id"), session.userId)) // FIXME: make this not any
     .first();
 
   return { session, user };

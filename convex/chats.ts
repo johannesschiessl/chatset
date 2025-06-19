@@ -28,7 +28,7 @@ export const getChatsGroupedByDate = query({
     }),
   ),
   handler: async (ctx, args) => {
-    const auth: any = await verifyAuth(ctx, args.sessionToken); // FIXME: make this not any, I'm SO sorry...
+    const auth: any = await verifyAuth(ctx, args.sessionToken); // FIXME: make this not any
 
     const chats = await ctx.db
       .query("chats")
@@ -85,7 +85,7 @@ export const startChatWithFirstMessage = mutation({
   returns: v.id("chats"),
   handler: async (ctx, args) => {
     console.log("[CHAT] Starting chat with first message. ARGS: ", args);
-    const auth: any = await verifyAuth(ctx, args.sessionToken); // FIXME: make this not any, I'm SO sorry...
+    const auth: any = await verifyAuth(ctx, args.sessionToken); // FIXME: make this not any
 
     const chatId = await ctx.db.insert("chats", {
       title: "New Chat",

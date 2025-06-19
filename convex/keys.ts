@@ -67,7 +67,7 @@ export const getApiKeysPreview = query({
     sessionToken: v.string(),
   },
   handler: async (ctx, args) => {
-    const auth: any = await verifyAuth(ctx, args.sessionToken); // TODO: fix type
+    const auth: any = await verifyAuth(ctx, args.sessionToken); // FIXME: make this not any
 
     const apiKeys = await ctx.db
       .query("apiKeys")

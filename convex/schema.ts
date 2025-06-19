@@ -28,7 +28,7 @@ export default defineSchema({
         chat: v.id("chats"),
         clientId: v.string(),
         content: v.optional(v.string()),
-        forceTool: v.optional(v.string()),
+        webSearch: v.optional(v.boolean()),
         model: v.string(),
         role: v.literal("assistant"),
         generationDone: v.boolean(),

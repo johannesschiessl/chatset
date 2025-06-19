@@ -8,7 +8,13 @@ import {
   oneDark,
 } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
-import { CopyIcon, CheckIcon, BrainIcon, AlertCircleIcon } from "lucide-react";
+import {
+  CopyIcon,
+  CheckIcon,
+  BrainIcon,
+  AlertCircleIcon,
+  GlobeIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -216,6 +222,7 @@ interface AssistantMessageProps {
   content?: string;
   error?: string;
   generationDone: boolean;
+  webSearch?: boolean;
 }
 
 export default function AssistantMessage({
@@ -225,6 +232,7 @@ export default function AssistantMessage({
   content,
   generationDone,
   error,
+  webSearch,
 }: AssistantMessageProps) {
   let driven = false;
   if (clientId === window.localStorage.getItem("clientId")) {
@@ -246,7 +254,7 @@ export default function AssistantMessage({
 
   return (
     <div className="mb-4">
-      {status === "pending" && (
+      {status === "pending" && !webSearch && (
         <div className="text-muted-foreground">
           <div className="flex gap-1">
             <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]"></div>
@@ -277,7 +285,7 @@ export default function AssistantMessage({
               <AccordionTrigger>
                 <div className="flex items-center gap-2">
                   <BrainIcon className="size-4" />
-                  Thinking...
+                  {generationDone ? "Thoughts" : "Thinking..."}
                 </div>
               </AccordionTrigger>
               <AccordionContent>
@@ -291,6 +299,13 @@ export default function AssistantMessage({
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+        </div>
+      )}
+
+      {webSearch && (
+        <div className="mb-4 flex items-center gap-2">
+          <GlobeIcon className="size-4" />
+          {generationDone ? "Searched the web" : "Searching the web..."}
         </div>
       )}
 

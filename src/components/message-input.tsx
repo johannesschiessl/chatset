@@ -3,14 +3,13 @@
 import { useState, KeyboardEvent, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowUpIcon, ChevronDownIcon, WrenchIcon } from "lucide-react";
+import { ArrowUpIcon, ChevronDownIcon, GlobeIcon } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { Id } from "../../convex/_generated/dataModel";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ModelSelection from "./model-selection";
-import ToolSelection from "./tool-selection";
-import { models, toolConfigs } from "../../models";
+import { models } from "../../models";
 import { authClient } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 
@@ -22,19 +21,12 @@ export default function MessageInput() {
   const chatId = params.chatId as Id<"chats">;
 
   const selectedModelString = searchParams.get("model") || "gpt-4.1";
-  const selectedToolString = searchParams.get("tool") || undefined;
+  const webSearchEnabled = searchParams.get("webSearch") === "true";
 
   const selectedModel = {
     string: selectedModelString,
     label: models[selectedModelString as keyof typeof models]?.label,
     api: models[selectedModelString as keyof typeof models]?.api.badge,
-  };
-
-  const selectedTool = {
-    string: selectedToolString,
-    label: selectedToolString
-      ? toolConfigs[selectedToolString as keyof typeof toolConfigs]?.label
-      : undefined,
   };
 
   const sendMessage = useMutation(api.messages.sendMessage);
@@ -73,25 +65,18 @@ export default function MessageInput() {
     [updateSearchParams],
   );
 
-  const handleToolSelect = useCallback(
-    (toolString: string | undefined) => {
-      updateSearchParams({ tool: toolString });
-    },
-    [updateSearchParams],
-  );
+  const handleWebSearchToggle = useCallback(() => {
+    updateSearchParams({ webSearch: webSearchEnabled ? undefined : "true" });
+  }, [updateSearchParams, webSearchEnabled]);
 
-  // Auto-clear invalid tool selection when model changes
+  // Auto-clear web search when model changes to one that doesn't support it
   useEffect(() => {
     const modelConfig = models[selectedModelString as keyof typeof models];
-    const availableTools = modelConfig?.tools || [];
 
-    if (
-      selectedToolString &&
-      !availableTools.includes(selectedToolString as keyof typeof toolConfigs)
-    ) {
-      updateSearchParams({ tool: undefined });
+    if (webSearchEnabled && modelConfig && !("webSearch" in modelConfig)) {
+      updateSearchParams({ webSearch: undefined });
     }
-  }, [selectedModelString, selectedToolString, updateSearchParams]);
+  }, [selectedModelString, webSearchEnabled, updateSearchParams]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -120,12 +105,12 @@ export default function MessageInput() {
         prompt: message,
         clientId: window.localStorage.getItem("clientId") || "",
         model: selectedModelString,
-        forceTool: selectedToolString,
+        webSearch: webSearchEnabled,
         sessionToken: session.data?.session.token ?? "",
       });
       router.push(
         `/chat/${newChatId}?model=${selectedModelString}${
-          selectedToolString ? `&tool=${selectedToolString}` : ""
+          webSearchEnabled ? `&webSearch=true` : ""
         }`,
       );
       return;
@@ -139,7 +124,7 @@ export default function MessageInput() {
         chatId,
         model: selectedModelString,
         clientId: window.localStorage.getItem("clientId") || "",
-        forceTool: selectedToolString,
+        webSearch: webSearchEnabled,
         sessionToken: session.data?.session.token || "",
       });
     }
@@ -153,12 +138,11 @@ export default function MessageInput() {
   }
 
   const modelConfig = models[selectedModelString as keyof typeof models];
-  const hasTools = modelConfig?.tools && modelConfig.tools.length > 0;
-
-  const selectedToolIcon = selectedToolString
-    ? toolConfigs[selectedToolString as keyof typeof toolConfigs]?.icon
-    : null;
-  const ToolIcon = selectedToolIcon || WrenchIcon;
+  const hasWebSearch = !!(
+    modelConfig &&
+    "webSearch" in modelConfig &&
+    modelConfig.webSearch
+  );
 
   return (
     <div className="bg-muted mx-auto w-2xl max-w-2xl rounded-md p-4">
@@ -193,18 +177,14 @@ export default function MessageInput() {
             </Button>
           </ModelSelection>
 
-          {hasTools && (
-            <ToolSelection
-              selectedModel={selectedModelString}
-              selectedTool={selectedToolString}
-              onSelect={(toolString) => handleToolSelect(toolString)}
+          {hasWebSearch && (
+            <Button
+              variant={webSearchEnabled ? "default" : "outline"}
+              onClick={handleWebSearchToggle}
             >
-              <Button variant="outline" className="gap-2">
-                <ToolIcon className="h-4 w-4" />
-                {selectedTool.label}
-                <ChevronDownIcon className="h-4 w-4" />
-              </Button>
-            </ToolSelection>
+              <GlobeIcon className="h-4 w-4" />
+              Web Search
+            </Button>
           )}
         </div>
 

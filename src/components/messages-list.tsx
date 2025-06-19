@@ -58,6 +58,7 @@ export default function MessagesList() {
               content={message.content}
               error={message.error}
               generationDone={message.generationDone}
+              webSearch={message.webSearch}
             />
           )}
         </div>

@@ -1,32 +1,28 @@
-import { models, toolConfigs, ToolName } from "../models";
+import { models } from "../models";
 import { internal } from "./_generated/api";
 
-export function getTools(model: string, forceTool?: string) {
+export function getTools(model: string, webSearch?: boolean) {
   const modelConfig = models[model as keyof typeof models];
   if (!modelConfig) {
-    return { tools: {}, toolChoice: undefined };
+    return;
   }
 
-  const tools: Record<string, any> = {};
-  for (const toolName of modelConfig.tools) {
-    const toolConfig = toolConfigs[toolName];
-    if (toolConfig) {
-      tools[toolConfig.name] = toolConfig.tool;
-    }
+  if (
+    webSearch &&
+    modelConfig &&
+    "webSearch" in modelConfig &&
+    modelConfig.webSearch
+  ) {
+    return {
+      tools: {
+        [modelConfig.webSearch.name]: modelConfig.webSearch.tool,
+      },
+      toolChoice: {
+        type: "tool" as const,
+        toolName: modelConfig.webSearch.name,
+      },
+    };
   }
-
-  let toolChoice: { type: "tool"; toolName: string } | undefined;
-  if (forceTool && modelConfig.tools.includes(forceTool as ToolName)) {
-    const toolConfig = toolConfigs[forceTool as ToolName];
-    if (toolConfig) {
-      toolChoice = { type: "tool", toolName: toolConfig.name };
-    }
-  }
-
-  return {
-    tools,
-    ...(toolChoice && { toolChoice }),
-  };
 }
 
 export function getRequiredApiKeyForModel(

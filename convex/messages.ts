@@ -52,7 +52,7 @@ export const createAssistantMessage = internalMutation({
     chatId: v.id("chats"),
     clientId: v.string(),
     model: v.string(),
-    forceTool: v.optional(v.string()),
+    webSearch: v.optional(v.boolean()),
     userId: v.id("user"),
   },
   handler: async (ctx, args) => {
@@ -62,7 +62,7 @@ export const createAssistantMessage = internalMutation({
       chat: args.chatId,
       clientId: args.clientId,
       model: args.model,
-      forceTool: args.forceTool,
+      webSearch: args.webSearch,
       userId: args.userId,
       generationDone: false,
     });
@@ -101,7 +101,7 @@ export const sendMessage = mutation({
     chatId: v.id("chats"),
     clientId: v.string(),
     model: v.string(),
-    forceTool: v.optional(v.string()),
+    webSearch: v.optional(v.boolean()),
     sessionToken: v.string(),
   },
   handler: async (ctx, args) => {
@@ -120,7 +120,7 @@ export const sendMessage = mutation({
       chatId: args.chatId,
       clientId: args.clientId,
       model: args.model,
-      forceTool: args.forceTool,
+      webSearch: args.webSearch,
       userId: auth.user._id,
     });
   },
@@ -244,7 +244,7 @@ export const streamAssistantMessage = httpAction(async (ctx, request) => {
         messages: await ctx.runQuery(internal.messages.getHistory, {
           chatId: message.chat,
         }),
-        ...getTools(message.model, message.forceTool),
+        ...getTools(message.model, message.webSearch),
       });
 
       for await (const textPart of textStream) {

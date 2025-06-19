@@ -78,7 +78,7 @@ export const startChatWithFirstMessage = mutation({
     prompt: v.string(),
     clientId: v.string(),
     model: v.string(),
-    forceTool: v.optional(v.string()),
+    webSearch: v.optional(v.boolean()),
     sessionToken: v.string(),
   },
   returns: v.id("chats"),
@@ -96,7 +96,7 @@ export const startChatWithFirstMessage = mutation({
       chatId,
       clientId: args.clientId,
       model: args.model,
-      forceTool: args.forceTool,
+      webSearch: args.webSearch,
       sessionToken: args.sessionToken,
     });
 

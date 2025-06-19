@@ -171,8 +171,8 @@ export default function SettingsPage() {
 
               <AlertTitle>Tested APIs</AlertTitle>
               <AlertDescription>
-                I tested both the OpenAI and Groq APIs. Sadly, I don&apos;t have
-                any credits for Google, Anthropic, or OpenRouter, so I
+                I tested the OpenRouter, OpenAI, and Groq APIs. Sadly, I
+                don&apos;t have any credits for Google and Anthropic, so I
                 couldn&apos;t test them. In theory, they should work because of
                 the AI SDK.
               </AlertDescription>

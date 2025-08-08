@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "jxs Chat",
-  description: "jxs Chat",
+  title: "chatset",
+  description: "chatset",
 };
 
 export default function RootLayout({

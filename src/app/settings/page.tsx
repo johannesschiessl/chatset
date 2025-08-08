@@ -121,7 +121,7 @@ export default function SettingsPage() {
         <div className="flex items-center gap-2">
           <Link
             target="_blank"
-            href="https://github.com/johannesschiessl/jxs-chat"
+            href="https://github.com/johannesschiessl/chatset"
           >
             <Button size="icon" variant="ghost">
               <svg

@@ -1,10 +1,10 @@
-# jxs Chat
+# chatset
 
 A fast AI chat app that allows users to chat with models via OpenRouter, OpenAI, Groq, Anthropic (not tested) and Google (not tested).
 
 Developed as a clone of [T3 Chat](https://t3.chat) for the T3 Chat Cloneathon.
 
-Try it out at [jxs-chat.vercel.app](https://jxs-chat.vercel.app)
+Try it out at [chatset.johannesschiessl.com](https://chatset.johannesschiessl.com)
 
 ## Supported Models
 
@@ -25,8 +25,8 @@ See [models.ts](models.ts) for the list of supported models.
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/johannesschiessl/jxs-chat
-   cd jxs-chat
+   git clone https://github.com/johannesschiessl/chatset.git
+   cd chatset
    ```
 
 2. **Install dependencies**
@@ -70,13 +70,11 @@ See [models.ts](models.ts) for the list of supported models.
    pnpm start
    ```
 
-That's it! Your jxs Chat instance should now be running.
+That's it! Your chatset instance should now be running.
 
 ## Contributing
 
 Feel free to contribute by creating issues or pull requests. Suggestions for new features are always welcome!
-
-Just note that I cannot accept PRs (or change anything) until the T3 Chat Cloneathon is over.
 
 ## License
 

@@ -79,7 +79,7 @@ export function AppSidebar({
       <SidebarHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 p-2">
-            <h1 className="text-lg font-bold">jxs Chat</h1>
+            <h1 className="text-lg font-bold">chatset</h1>
             <Badge variant="outline">Beta</Badge>
           </div>
           <SidebarTrigger />

@@ -28,7 +28,7 @@ export default function MessageInput({
 
   const chatId = params.chatId as Id<"chats">;
 
-  const selectedModelString = searchParams.get("model") || "gpt-4.1";
+  const selectedModelString = searchParams.get("model") || "gpt-5";
   const webSearchEnabled = searchParams.get("webSearch") === "true";
 
   const selectedModel = {

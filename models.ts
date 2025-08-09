@@ -71,6 +71,36 @@ export const createModels = (apiKeys: {
   });
 
   return {
+    "gpt-5": {
+      label: "GPT-5",
+      model: openai.responses("gpt-5"),
+      provider: modelProviders.openai,
+      api: modelAPIs.openai,
+      webSearch: {
+        tool: webSearchTool,
+        name: "web_search_preview",
+      },
+    },
+    "gpt-5-mini": {
+      label: "GPT-5 Mini",
+      model: openai.responses("gpt-5-mini"),
+      provider: modelProviders.openai,
+      api: modelAPIs.openai,
+      webSearch: {
+        tool: webSearchTool,
+        name: "web_search_preview",
+      },
+    },
+    "gpt-5-nano": {
+      label: "GPT-5 Nano",
+      model: openai.responses("gpt-5-nano"),
+      provider: modelProviders.openai,
+      api: modelAPIs.openai,
+      webSearch: {
+        tool: webSearchTool,
+        name: "web_search_preview",
+      },
+    },
     "gpt-4.1": {
       label: "GPT-4.1",
       model: openai.responses("gpt-4.1"),

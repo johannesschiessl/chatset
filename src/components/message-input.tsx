@@ -143,7 +143,10 @@ export default function MessageInput({
     if (trimmedMessage) {
       setMessage("");
       sendMessage({
-        prompt: trimmedMessage,
+        message: {
+          type: "prompt",
+          prompt: trimmedMessage,
+        },
         chatId,
         model: selectedModelString,
         clientId: window.localStorage.getItem("clientId") || "",

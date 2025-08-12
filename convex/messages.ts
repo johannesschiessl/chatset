@@ -98,7 +98,16 @@ export const addErrorToAssistantMessage = internalMutation({
 
 export const sendMessage = mutation({
   args: {
-    prompt: v.string(),
+    message: v.union(
+      v.object({
+        type: v.literal("prompt"),
+        prompt: v.string(),
+      }),
+      v.object({
+        type: v.literal("id"),
+        id: v.id("messages"),
+      }),
+    ),
     chatId: v.id("chats"),
     clientId: v.string(),
     model: v.string(),
@@ -108,11 +117,13 @@ export const sendMessage = mutation({
   handler: async (ctx, args) => {
     const auth = await verifyAuth(ctx, args.sessionToken);
 
-    await ctx.runMutation(internal.messages.createUserMessage, {
-      content: args.prompt,
-      chatId: args.chatId,
-      userId: auth.user._id,
-    });
+    if (args.message.type === "prompt") {
+      await ctx.runMutation(internal.messages.createUserMessage, {
+        content: args.message.prompt,
+        chatId: args.chatId,
+        userId: auth.user._id,
+      });
+    }
 
     const streamId = await streamingComponent.createStream(ctx);
 

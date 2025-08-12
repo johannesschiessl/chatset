@@ -92,8 +92,18 @@ export const startChatWithFirstMessage = mutation({
       userId: auth.user._id,
     });
 
+    const messageId = await ctx.db.insert("messages", {
+      role: "user",
+      content: args.prompt,
+      userId: auth.user._id,
+      chat: chatId,
+    });
+
     await ctx.scheduler.runAfter(0, api.messages.sendMessage, {
-      prompt: args.prompt,
+      message: {
+        type: "id",
+        id: messageId,
+      },
       chatId,
       clientId: args.clientId,
       model: args.model,
